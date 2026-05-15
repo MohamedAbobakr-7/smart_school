@@ -1,0 +1,40 @@
+from rest_framework import serializers
+
+from .models import Notification, NotificationPreference
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "notification_type",
+            "title",
+            "body",
+            "metadata",
+            "read_at",
+            "dedupe_key",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class NotificationPushSerializer(serializers.ModelSerializer):
+    """Minimal payload for WebSocket delivery."""
+
+    class Meta:
+        model = Notification
+        fields = ["id", "notification_type", "title", "body", "metadata", "created_at"]
+
+
+class NotificationPreferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationPreference
+        fields = [
+            "allow_low_grade",
+            "allow_attendance",
+            "allow_student_report",
+            "allow_weekly_report",
+            "updated_at",
+        ]
+        read_only_fields = ["updated_at"]

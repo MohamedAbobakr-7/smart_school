@@ -1,0 +1,12 @@
+Django>=5.2.10
+djangorestframework
+djangorestframework-simplejwt
+mssql-django
+pyodbc
+python-dotenv
+requests
+Pillow
+reportlab>=4.0.0
+channels>=4.0.0
+daphne>=4.0.0
+
