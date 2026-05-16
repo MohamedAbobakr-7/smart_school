@@ -36,6 +36,7 @@ TRANSLATIONS = {
         'no_faces_detected_batch': 'No faces detected in the image',
         'faces_detected_matched': 'Detected {num_faces} face(s), matched {num_matches} student(s)',
         'no_faces_detected_try': 'No faces detected. Try: better lighting, higher resolution, or different angle.',
+        'student_ids_filter_applied': 'Matching restricted to {num_students} student(s) in the target class',
 
         # ──── Database ────
         'db_connection_error': 'Database connection error: {error}',
@@ -72,6 +73,7 @@ TRANSLATIONS = {
         'no_faces_detected_batch': 'لم يتم اكتشاف وجوه في الصورة',
         'faces_detected_matched': 'تم اكتشاف {num_faces} وجه(وجوه)، ومطابقة {num_matches} طالب(طلاب)',
         'no_faces_detected_try': 'لم يتم اكتشاف وجوه. حاول: إضاءة أفضل، دقة أعلى، أو زاوية مختلفة.',
+        'student_ids_filter_applied': 'المطابقة مقتصرة على {num_students} طالب(طلاب) في الفصل المستهدف',
 
         # ──── Database ────
         'db_connection_error': 'خطأ في اتصال قاعدة البيانات: {error}',

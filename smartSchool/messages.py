@@ -51,6 +51,11 @@ MSG_SESSION_CANCELLED = _('Session cancelled.')
 MSG_ATTENDANCE_DUPLICATE = _('Attendance record already exists for this student on {date}.')
 MSG_ATTENDANCE_DUPLICATE_MODEL = _('Attendance record already exists for {student_id} on {date}.')
 MSG_FACE_VERIFIED = _('Face verified successfully for student {student_id}.')
+MSG_STUDENT_CLASS_MISMATCH = _(
+    'Student {student_id} was recognised but belongs to class '
+    '{matched_class}, not the session class {session_class}. '
+    'Attendance not marked.'
+)
 
 # ──── Exams ────
 MSG_OPTIONS_MUST_BE_LIST = _('Options must be a list/array.')

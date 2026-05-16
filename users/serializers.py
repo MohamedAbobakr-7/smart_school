@@ -170,9 +170,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             return None
         return {
             'teacher_id': profile.teacher_id,
-            'department': profile.department,
-            'specialization': profile.specialization,
             'hire_date': profile.hire_date,
+            'subject_ids': list(profile.assigned_subjects.values_list('id', flat=True)),
+            'subject_names': list(profile.assigned_subjects.values_list('name', flat=True)),
+            'class_ids': list(profile.assigned_classes.values_list('id', flat=True)),
+            'class_names': [
+                c.display_name for c in profile.assigned_classes.all()
+            ],
         }
 
     def get_parent_profile(self, obj):

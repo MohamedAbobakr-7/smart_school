@@ -32,23 +32,33 @@ export async function apiFetch(path, options = {}) {
 }
 
 /**
- * Fetch ALL pages of a paginated DRF list endpoint.
- * Automatically follows `next` links until exhausted.
- * Returns a plain array of all results.
- *
- * @param {string} path  - API path, e.g. '/users/'
- * @returns {Promise<Array>}
+ * Convert an absolute DRF pagination URL back to a relative proxy path.
+ * DRF `next` links are absolute (e.g. http://127.0.0.1:8000/api/users/?page=2).
+ * In dev the Vite proxy only intercepts /api/* paths, so fetching an absolute
+ * URL directly from the browser bypasses the proxy and fails with a CORS error.
+ * This helper strips the origin and returns just the pathname + search so the
+ * request always goes through the proxy.
  */
+function toProxyPath(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    // Preserve the full path + query string, e.g. /api/users/?page=2
+    return u.pathname + u.search
+  } catch {
+    // Not a valid absolute URL — assume it's already a relative path
+    return url.startsWith('/') ? url : `/api/${url}`
+  }
+}
+
 export async function apiFetchAll(path) {
   const { access } = useAuthStore.getState()
   const authHeader = access ? { Authorization: `Bearer ${access}` } : {}
 
-  // Build the absolute first-page URL
-  const firstUrl = path.startsWith('http')
-    ? path
-    : `/api${path.startsWith('/') ? '' : '/'}${path}`
+  // Build the first-page URL as a relative proxy path
+  const firstPath = path.startsWith('http') ? toProxyPath(path) : `/api${path.startsWith('/') ? '' : '/'}${path}`
 
-  let url = firstUrl
+  let url = firstPath
   const all = []
 
   while (url) {
@@ -69,8 +79,9 @@ export async function apiFetchAll(path) {
     }
     if (json.results && Array.isArray(json.results)) {
       all.push(...json.results)
-      // `next` is an absolute URL like http://localhost:8000/api/users/?page=2
-      url = json.next || null
+      // Convert absolute `next` URL to a relative proxy path so subsequent
+      // pages also go through the Vite proxy (avoids CORS failures).
+      url = toProxyPath(json.next)
     } else {
       // Unexpected shape — return as-is
       all.push(json)

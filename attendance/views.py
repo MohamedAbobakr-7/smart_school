@@ -11,6 +11,7 @@ from smartSchool.messages import (
     MSG_FACE_DETECTION_FAILED, MSG_PROCESSING_RESULT,
     MSG_DUPLICATE_ACTIVE_SESSION, MSG_SESSION_NOT_ACTIVE,
     MSG_SESSION_COMPLETED, MSG_SESSION_CANCELLED,
+    MSG_STUDENT_CLASS_MISMATCH,
 )
 from users.permissions import IsAdmin, IsAdminOrTeacher, IsStudent, IsParent
 from .models import Attendance, AttendanceSession
@@ -131,13 +132,25 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
         
+        # ── Class-based student filtering ──
+        # Collect the student IDs that belong to the session's class so the
+        # face recognition service only matches against those students.
+        # This prevents false-positive matches on students from other classes.
+        session_class = session.school_class
+        class_student_ids = []
+        if session_class:
+            class_student_ids = list(
+                session_class.students.values_list('student_id', flat=True)
+            )
+
         client = get_face_recognition_client()
         image_file.seek(0)
         detection_result = client.detect_faces_batch(
             image_file,
             tolerance=0.6,
             model='hog',
-            num_jitters=1
+            num_jitters=1,
+            student_ids=class_student_ids if class_student_ids else None,
         )
         
         if not detection_result.get('success'):
@@ -155,6 +168,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         updated_records = []
         matched_students = []
         
+        skipped_mismatch = []  # students recognised but not in this class
+
         for match in matches:
             if not match.get('match'):
                 continue
@@ -174,6 +189,18 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             except Exception:
                 continue
             
+            # ── Class verification: only mark attendance for students
+            # belonging to the session's assigned class ──
+            if session_class and student.school_class_id != session_class.id:
+                skipped_mismatch.append({
+                    'student_id': student_id_str,
+                    'student_name': student.user.get_full_name() or student_id_str,
+                    'matched_class': str(student.school_class) if student.school_class else None,
+                    'session_class': str(session_class),
+                    'confidence': match.get('confidence', 0),
+                })
+                continue
+
             confidence = match.get('confidence', 0)
 
             # Always update/create: set status to present
@@ -214,6 +241,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 'num_faces_detected': detection_result.get('num_faces_detected', 0),
                 'num_matches': len(matched_students),
                 'matched_students': matched_students,
+                'skipped_class_mismatch': skipped_mismatch,
                 'matches': matches,
                 'roster': roster,
                 'num_attendance_marked': session.total_attendance_marked,

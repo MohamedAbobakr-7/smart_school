@@ -205,13 +205,17 @@ export function FeatureModulePage({
       const res = await apiFetch(`/attendance-sessions/${activeSession.id}/complete/`, { method: 'POST' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json.detail || json.message || `Complete failed (${res.status})`)
-      setActiveSession(null)
-      setRoster({ present: [], absent: [] })
       setAttendanceMsg(`Session #${activeSession.id} completed.`)
-      await load(attendanceEndpoint)
     } catch (err) {
       setAttendanceMsg(err.message || 'Could not complete session.')
     } finally {
+      // Always re-verify the active session from the backend so the UI
+      // reflects the true state — even if the complete call failed (e.g.
+      // session was already completed by another request).
+      setActiveSession(null)
+      setRoster({ present: [], absent: [] })
+      await fetchActiveSession()
+      await load(attendanceEndpoint)
       setSessionBusy(false)
     }
   }

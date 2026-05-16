@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react'
-import { apiFetch } from '../lib/api'
+import { apiFetchAll } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
-
-function parseList(payload) {
-  if (Array.isArray(payload)) return payload
-  if (payload?.results && Array.isArray(payload.results)) return payload.results
-  return []
-}
 
 /**
  * Fetches the logged-in teacher's own profile from /api/teachers/.
+ * Uses apiFetchAll to ensure all pages are fetched (the teacher profile
+ * might not be on the first page if there are >20 teachers).
  *
  * Returns:
  *   teacher          — the full teacher object (or null while loading)
@@ -33,10 +29,7 @@ export function useTeacherProfile() {
       setLoading(true)
       setError('')
       try {
-        const res = await apiFetch('/teachers/')
-        if (!res.ok) throw new Error(`Failed to load teacher profile (${res.status})`)
-        const data = await res.json().catch(() => [])
-        const list = parseList(data)
+        const list = await apiFetchAll('/teachers/')
         const mine = list.find((t) => t.user === user.id) || null
         if (!cancelled) setTeacher(mine)
       } catch (e) {

@@ -88,8 +88,6 @@ class Command(BaseCommand):
             user=teacher_user,
             defaults={
                 'teacher_id': 'T001',
-                'department': 'Mathematics',
-                'specialization': 'Algebra and Calculus',
                 'hire_date': date(2020, 1, 1)
             }
         )

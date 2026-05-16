@@ -7,7 +7,7 @@ This service handles face recognition for attendance tracking.
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import face_recognition
 import cv2
 import numpy as np
@@ -464,13 +464,19 @@ def process_image_batch(image_bytes: bytes, model: str = 'hog', num_jitters: int
         return [], {}
 
 
-def match_faces_batch(face_encodings: list, tolerance: float = 0.6) -> list:
+def match_faces_batch(face_encodings: list, tolerance: float = 0.6, student_ids_filter: Optional[list] = None) -> list:
     """
-    Match multiple face encodings against all stored student encodings
+    Match multiple face encodings against stored student encodings.
+    
+    When student_ids_filter is provided, only encodings for those student IDs
+    are loaded and compared.  This prevents false-positive matches against
+    students who are not in the class whose attendance is being taken.
     
     Args:
         face_encodings: List of face encoding arrays to match
         tolerance: Matching tolerance (lower = more strict)
+        student_ids_filter: Optional list of student IDs to restrict matching to.
+            If None or empty, all stored encodings are used (backward-compatible).
         
     Returns:
         List of match results, each containing:
@@ -488,13 +494,18 @@ def match_faces_batch(face_encodings: list, tolerance: float = 0.6) -> list:
     if not FACE_ENCODINGS_DIR.exists():
         return matches
     
-    # Load all student encodings
+    # Load student encodings – filtered if student_ids_filter is given
     student_encodings = {}
     for encoding_file in FACE_ENCODINGS_DIR.glob("*.pkl"):
         if encoding_file.name.endswith(".backup"):
             continue
         
         student_id = encoding_file.stem
+        
+        # If a filter is provided, skip students not in the filter list
+        if student_ids_filter is not None and student_id not in student_ids_filter:
+            continue
+        
         encoding = get_student_face_encoding(student_id)
         if encoding is not None:
             student_encodings[student_id] = encoding
@@ -516,7 +527,7 @@ def match_faces_batch(face_encodings: list, tolerance: float = 0.6) -> list:
             'face_location': None
         }
         
-        # Compare with all stored encodings
+        # Compare with stored encodings
         face_distances = face_recognition.face_distance(stored_encodings, face_encoding)
         best_match_index = face_distances.argmin()
         best_distance = face_distances[best_match_index]
@@ -844,10 +855,20 @@ async def update_encoding(
     }
 
 
-def _run_batch_detection(image_bytes: bytes, model: str, num_jitters: int, tolerance: float, lang: str = 'en'):
-    """Run CPU-bound batch detection in a thread (called via asyncio.to_thread)."""
+def _run_batch_detection(image_bytes: bytes, model: str, num_jitters: int, tolerance: float, lang: str = 'en', student_ids_filter: Optional[List[str]] = None):
+    """Run CPU-bound batch detection in a thread (called via asyncio.to_thread).
+    
+    Args:
+        image_bytes: Raw image bytes
+        model: Face detection model ('hog' or 'cnn')
+        num_jitters: Number of jitters for encoding
+        tolerance: Face matching tolerance
+        lang: Language code for messages
+        student_ids_filter: Optional list of student IDs to restrict matching to.
+            If None, all stored encodings are used.
+    """
     face_encodings, image_info = process_image_batch(image_bytes, model=model, num_jitters=num_jitters, lang=lang)
-    matches = match_faces_batch(face_encodings, tolerance) if face_encodings else []
+    matches = match_faces_batch(face_encodings, tolerance, student_ids_filter=student_ids_filter) if face_encodings else []
     return face_encodings, image_info, matches
 
 
@@ -857,7 +878,8 @@ async def detect_faces_batch(
     image: UploadFile = File(...),
     tolerance: float = 0.6,
     model: str = 'hog',
-    num_jitters: int = 1
+    num_jitters: int = 1,
+    student_ids: Optional[str] = None
 ):
     """
     Detect all faces in an image and match them against stored student encodings
@@ -866,12 +888,18 @@ async def detect_faces_batch(
     captures a classroom image and the system automatically detects and matches
     all faces to students.
     
+    When **student_ids** is provided (comma-separated list, e.g. "STU001,STU002"),
+    only those students' encodings are loaded for matching.  This prevents
+    false-positive matches against students from other classes and improves
+    performance.
+    
     Args:
         request: FastAPI Request object (for language detection)
         image: Image file containing multiple faces
         tolerance: Face matching tolerance (0.0-1.0, lower = more strict)
         model: Detection model - 'hog' (faster, default) or 'cnn' (slower, more accurate)
         num_jitters: Number of times to re-sample face when encoding (higher = more accurate)
+        student_ids: Optional comma-separated list of student IDs to restrict matching to
         
     Returns:
         Dictionary with:
@@ -882,17 +910,22 @@ async def detect_faces_batch(
     lang = resolve_lang(request)
     image_bytes = await image.read()
     
+    # Parse student_ids filter from comma-separated string
+    student_ids_filter = None
+    if student_ids:
+        student_ids_filter = [sid.strip() for sid in student_ids.split(',') if sid.strip()]
+    
     # Run CPU-bound face detection and matching in a thread pool to avoid blocking the event loop
     loop = asyncio.get_event_loop()
     if hasattr(asyncio, 'to_thread'):
         face_encodings, image_info, matches = await asyncio.to_thread(
-            _run_batch_detection, image_bytes, model, num_jitters, tolerance, lang
+            _run_batch_detection, image_bytes, model, num_jitters, tolerance, lang, student_ids_filter
         )
     else:
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as pool:
             face_encodings, image_info, matches = await loop.run_in_executor(
-                pool, lambda: _run_batch_detection(image_bytes, model, num_jitters, tolerance, lang)
+                pool, lambda: _run_batch_detection(image_bytes, model, num_jitters, tolerance, lang, student_ids_filter)
             )
     
     if len(face_encodings) == 0:

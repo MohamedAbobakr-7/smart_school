@@ -5,7 +5,7 @@ This module handles communication with the FastAPI face recognition service.
 """
 
 import requests
-from typing import Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 from django.conf import settings
 import logging
 
@@ -221,7 +221,7 @@ class FaceRecognitionClient:
                 'error': str(e)
             }
     
-    def detect_faces_batch(self, image_file, tolerance: float = 0.6, model: str = 'hog', num_jitters: int = 1) -> Dict[str, Any]:
+    def detect_faces_batch(self, image_file, tolerance: float = 0.6, model: str = 'hog', num_jitters: int = 1, student_ids: Optional[list] = None) -> Dict[str, Any]:
         """
         Detect all faces in an image and match them against stored student encodings
         
@@ -230,6 +230,9 @@ class FaceRecognitionClient:
             tolerance: Face matching tolerance (0.0-1.0, lower = more strict)
             model: Detection model - 'hog' (faster, default) or 'cnn' (more accurate, slower)
             num_jitters: Number of times to re-sample face when encoding (higher = more accurate)
+            student_ids: Optional list of student IDs to restrict matching to.
+                Only encodings for these students will be loaded, preventing
+                false-positive matches against students from other classes.
             
         Returns:
             Dictionary with batch detection results:
@@ -252,6 +255,10 @@ class FaceRecognitionClient:
                 'model': model,
                 'num_jitters': num_jitters
             }
+            # Pass student_ids as comma-separated string so the face service
+            # only loads encodings for students in the target class
+            if student_ids:
+                params['student_ids'] = ','.join(student_ids)
             
             response = requests.post(
                 url,

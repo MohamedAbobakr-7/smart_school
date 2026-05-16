@@ -253,8 +253,8 @@ def _build_admin_context(user, intent):
             teachers = list(Teacher.objects.all()[:15])
             for t in teachers:
                 name = t.user.get_full_name() or t.user.username
-                dept = t.department or 'No department'
-                lines.append(f"  {name} - {dept}")
+                subj_names = ', '.join(s.name for s in t.assigned_subjects.all()[:5]) or 'No subjects assigned'
+                lines.append(f"  {name} - {subj_names}")
 
         elif intent == 'subjects':
             from subjects.models import Subject
@@ -305,14 +305,7 @@ def _build_teacher_context(user, intent):
             )
             return lines
 
-        # Always include basic identity for non-greeting intents
-        lines.append(f"Teacher: {name} (ID: {tp.teacher_id}).")
-        if tp.department:
-            lines.append(f"Department: {tp.department}.")
-
         if intent in ('overview', 'general'):
-            if tp.specialization:
-                lines.append(f"Specialization: {tp.specialization}.")
             subjects = list(tp.assigned_subjects.all()[:10])
             if subjects:
                 lines.append(f"Subjects: {', '.join(s.name for s in subjects)}.")
