@@ -1,0 +1,409 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-16 01:06+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\attendance\models.py:23
+msgid "Present"
+msgstr ""
+
+#: .\attendance\models.py:24
+msgid "Absent"
+msgstr ""
+
+#: .\attendance\models.py:32
+msgid "Manual"
+msgstr ""
+
+#: .\attendance\models.py:33
+msgid "Face Recognition"
+msgstr ""
+
+#: .\attendance\models.py:147
+msgid "Active"
+msgstr ""
+
+#: .\attendance\models.py:148
+msgid "Completed"
+msgstr ""
+
+#: .\attendance\models.py:149
+msgid "Cancelled"
+msgstr ""
+
+#: .\exams\models.py:71
+msgid "Quiz"
+msgstr ""
+
+#: .\exams\models.py:72
+msgid "Midterm"
+msgstr ""
+
+#: .\exams\models.py:73
+msgid "Final"
+msgstr ""
+
+#: .\exams\models.py:74
+msgid "Assignment"
+msgstr ""
+
+#: .\notifications\models.py:10
+msgid "Low Grade"
+msgstr ""
+
+#: .\notifications\models.py:11 .\reports\models.py:13
+msgid "Attendance"
+msgstr ""
+
+#: .\notifications\models.py:12
+msgid "New Student Report"
+msgstr ""
+
+#: .\notifications\models.py:13
+msgid "New Weekly Report"
+msgstr ""
+
+#: .\notifications\models.py:14
+msgid "System"
+msgstr ""
+
+#: .\reports\models.py:11
+msgid "Academic"
+msgstr ""
+
+#: .\reports\models.py:12
+msgid "Behavioral"
+msgstr ""
+
+#: .\reports\models.py:14
+msgid "General"
+msgstr ""
+
+#: .\reports\models.py:42
+msgid "School"
+msgstr ""
+
+#: .\reports\models.py:43 .\users\models.py:9
+msgid "Teacher"
+msgstr ""
+
+#: .\reports\models.py:46
+msgid "Pending"
+msgstr ""
+
+#: .\reports\models.py:47
+msgid "Ready"
+msgstr ""
+
+#: .\reports\models.py:48
+msgid "Failed"
+msgstr ""
+
+#: .\smartSchool\messages.py:4
+msgid "Resource not found."
+msgstr ""
+
+#: .\smartSchool\messages.py:5
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: .\smartSchool\messages.py:6
+msgid "Invalid request."
+msgstr ""
+
+#: .\smartSchool\messages.py:7
+msgid "Operation completed successfully."
+msgstr ""
+
+#: .\smartSchool\messages.py:8
+msgid "Created successfully."
+msgstr ""
+
+#: .\smartSchool\messages.py:9
+msgid "Updated successfully."
+msgstr ""
+
+#: .\smartSchool\messages.py:10
+msgid "Deleted successfully."
+msgstr ""
+
+#: .\smartSchool\messages.py:13
+msgid "Login successful."
+msgstr ""
+
+#: .\smartSchool\messages.py:14
+msgid "Invalid credentials."
+msgstr ""
+
+#: .\smartSchool\messages.py:15
+msgid "Token has expired."
+msgstr ""
+
+#: .\smartSchool\messages.py:16
+msgid "Invalid role parameter."
+msgstr ""
+
+#: .\smartSchool\messages.py:17
+#, python-brace-format
+msgid "Dashboard error: {error}"
+msgstr ""
+
+#: .\smartSchool\messages.py:20
+#, python-brace-format
+msgid "Successfully generated IDs for {count} student(s)."
+msgstr ""
+
+#: .\smartSchool\messages.py:21
+msgid "All students already have IDs. Nothing to update."
+msgstr ""
+
+#: .\smartSchool\messages.py:22
+msgid "No image file provided. Send the image as \"photo\" field."
+msgstr ""
+
+#: .\smartSchool\messages.py:23
+#, python-brace-format
+msgid "Invalid file type: {content_type}. Please upload a JPEG or PNG image."
+msgstr ""
+
+#: .\smartSchool\messages.py:24
+msgid "Face registration failed."
+msgstr ""
+
+#: .\smartSchool\messages.py:25
+msgid "Face registered successfully."
+msgstr ""
+
+#: .\smartSchool\messages.py:27
+msgid ""
+"Photo saved. After the student has a Student ID, open Edit and save again "
+"(or re-upload the photo) to register the face for attendance."
+msgstr ""
+
+#: .\smartSchool\messages.py:31
+msgid ""
+"Photo saved but face recognition service is unavailable. Start the service "
+"and retry."
+msgstr ""
+
+#: .\smartSchool\messages.py:34
+msgid "Invalid date format. Use YYYY-MM-DD."
+msgstr ""
+
+#: .\smartSchool\messages.py:37
+msgid "Only instructors can process classroom images."
+msgstr ""
+
+#: .\smartSchool\messages.py:38
+msgid "session_id is required."
+msgstr ""
+
+#: .\smartSchool\messages.py:39
+msgid "image file is required."
+msgstr ""
+
+#: .\smartSchool\messages.py:40
+#, python-brace-format
+msgid "Active session {session_id} not found."
+msgstr ""
+
+#: .\smartSchool\messages.py:41
+msgid "You can only process your own sessions."
+msgstr ""
+
+#: .\smartSchool\messages.py:42
+msgid "Face detection failed."
+msgstr ""
+
+#: .\smartSchool\messages.py:43
+#, python-brace-format
+msgid "Processed {faces} face(s), updated {records} attendance record(s)."
+msgstr ""
+
+#: .\smartSchool\messages.py:45
+#, python-brace-format
+msgid ""
+"An active session for \"{class_name}\" already exists today (ID: "
+"{session_id}). Complete or cancel it first."
+msgstr ""
+
+#: .\smartSchool\messages.py:48
+#, python-brace-format
+msgid "Session is not active ({status})."
+msgstr ""
+
+#: .\smartSchool\messages.py:49
+msgid "Session completed."
+msgstr ""
+
+#: .\smartSchool\messages.py:50
+msgid "Session cancelled."
+msgstr ""
+
+#: .\smartSchool\messages.py:51
+#, python-brace-format
+msgid "Attendance record already exists for this student on {date}."
+msgstr ""
+
+#: .\smartSchool\messages.py:52
+#, python-brace-format
+msgid "Attendance record already exists for {student_id} on {date}."
+msgstr ""
+
+#: .\smartSchool\messages.py:53
+#, python-brace-format
+msgid "Face verified successfully for student {student_id}."
+msgstr ""
+
+#: .\smartSchool\messages.py:56
+msgid "Options must be a list/array."
+msgstr ""
+
+#: .\smartSchool\messages.py:57
+msgid "At least 2 options are required for MCQ."
+msgstr ""
+
+#: .\smartSchool\messages.py:58
+#, python-brace-format
+msgid ""
+"correct_answer index ({index}) must be less than number of options ({count})."
+msgstr ""
+
+#: .\smartSchool\messages.py:59
+msgid "Grade already exists for this student and exam."
+msgstr ""
+
+#: .\smartSchool\messages.py:60
+#, python-brace-format
+msgid "Score ({score}) cannot exceed total questions ({total_questions})."
+msgstr ""
+
+#: .\smartSchool\messages.py:63
+msgid "Class name is required."
+msgstr ""
+
+#: .\smartSchool\messages.py:64
+#, python-brace-format
+msgid "A class \"{label}\" already exists."
+msgstr ""
+
+#: .\smartSchool\messages.py:67
+msgid "Message is required."
+msgstr ""
+
+#: .\smartSchool\messages.py:68
+#, python-brace-format
+msgid "Message too long (max {max} characters)."
+msgstr ""
+
+#: .\smartSchool\messages.py:74
+msgid "No teacher profile."
+msgstr ""
+
+#: .\smartSchool\messages.py:75
+msgid "Only administrators can set all_teachers."
+msgstr ""
+
+#: .\smartSchool\messages.py:76
+msgid "Only administrators can generate school-wide reports."
+msgstr ""
+
+#: .\smartSchool\messages.py:77
+msgid "Teacher profile required."
+msgstr ""
+
+#: .\smartSchool\messages.py:78
+msgid "PDF not generated for this report."
+msgstr ""
+
+#: .\smartSchool\messages.py:79
+msgid "PDF file missing on disk."
+msgstr ""
+
+#: .\smartSchool\messages.py:80
+msgid ""
+"Provide both week_start and week_end, or neither for default previous week."
+msgstr ""
+
+#: .\smartSchool\messages.py:81
+msgid "week_end must be on or after week_start."
+msgstr ""
+
+#: .\smartSchool\messages.py:84
+msgid "No file."
+msgstr ""
+
+#: .\smartSchool\messages.py:85
+msgid "File missing."
+msgstr ""
+
+#: .\smartSchool\messages.py:86
+msgid "You can only edit your own videos."
+msgstr ""
+
+#: .\smartSchool\messages.py:87
+msgid "You can only delete your own videos."
+msgstr ""
+
+#: .\smartSchool\messages.py:88
+msgid "Only students can sync watch progress."
+msgstr ""
+
+#: .\smartSchool\messages.py:91
+msgid "Smart School Backend API"
+msgstr ""
+
+#: .\smartSchool\settings.py:175
+msgid "English"
+msgstr ""
+
+#: .\smartSchool\settings.py:176
+msgid "Arabic"
+msgstr ""
+
+#: .\users\models.py:8
+msgid "Admin"
+msgstr ""
+
+#: .\users\models.py:10
+msgid "Student"
+msgstr ""
+
+#: .\users\models.py:11
+msgid "Parent"
+msgstr ""
+
+#: .\videos\models.py:19
+msgid "Lecture"
+msgstr ""
+
+#: .\videos\models.py:20
+msgid "Tutorial"
+msgstr ""
+
+#: .\videos\models.py:21
+msgid "Review"
+msgstr ""
+
+#: .\videos\models.py:22
+msgid "Lab / Demo"
+msgstr ""
+
+#: .\videos\models.py:23
+msgid "Other"
+msgstr ""

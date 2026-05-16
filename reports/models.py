@@ -2,15 +2,16 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 import os
 
 
 class Report(models.Model):
     REPORT_TYPES = [
-        ('academic', 'Academic'),
-        ('behavioral', 'Behavioral'),
-        ('attendance', 'Attendance'),
-        ('general', 'General'),
+        ('academic', _('Academic')),
+        ('behavioral', _('Behavioral')),
+        ('attendance', _('Attendance')),
+        ('general', _('General')),
     ]
 
     title = models.CharField(max_length=200)
@@ -38,13 +39,13 @@ class WeeklyReport(models.Model):
     """
 
     class Scope(models.TextChoices):
-        SCHOOL = "SCHOOL", "School"
-        TEACHER = "TEACHER", "Teacher"
+        SCHOOL = "SCHOOL", _("School")
+        TEACHER = "TEACHER", _("Teacher")
 
     class Status(models.TextChoices):
-        PENDING = "PENDING", "Pending"
-        READY = "READY", "Ready"
-        FAILED = "FAILED", "Failed"
+        PENDING = "PENDING", _("Pending")
+        READY = "READY", _("Ready")
+        FAILED = "FAILED", _("Failed")
 
     week_start = models.DateField(help_text="First day of the reporting week (inclusive)")
     week_end = models.DateField(help_text="Last day of the reporting week (inclusive)")

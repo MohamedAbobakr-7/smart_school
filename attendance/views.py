@@ -5,6 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
 from datetime import date
+from smartSchool.messages import (
+    MSG_INSTRUCTOR_ONLY, MSG_SESSION_ID_REQUIRED, MSG_IMAGE_FILE_REQUIRED,
+    MSG_ACTIVE_SESSION_NOT_FOUND, MSG_ONLY_OWN_SESSIONS,
+    MSG_FACE_DETECTION_FAILED, MSG_PROCESSING_RESULT,
+    MSG_DUPLICATE_ACTIVE_SESSION, MSG_SESSION_NOT_ACTIVE,
+    MSG_SESSION_COMPLETED, MSG_SESSION_CANCELLED,
+)
 from users.permissions import IsAdmin, IsAdminOrTeacher, IsStudent, IsParent
 from .models import Attendance, AttendanceSession
 from .serializers import AttendanceSerializer, AttendanceSessionSerializer
@@ -87,7 +94,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         user = request.user
         if not (user.is_admin() or user.is_teacher()):
             return Response(
-                {'success': False, 'message': 'Only instructors can process classroom images', 'error': 'permission_denied'},
+                {'success': False, 'message': str(MSG_INSTRUCTOR_ONLY), 'error': 'permission_denied'},
                 status=status.HTTP_403_FORBIDDEN
             )
         
@@ -96,13 +103,13 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         
         if not session_id:
             return Response(
-                {'success': False, 'message': 'session_id is required', 'error': 'missing_session_id'},
+                {'success': False, 'message': str(MSG_SESSION_ID_REQUIRED), 'error': 'missing_session_id'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         if not image_file:
             return Response(
-                {'success': False, 'message': 'image file is required', 'error': 'missing_image'},
+                {'success': False, 'message': str(MSG_IMAGE_FILE_REQUIRED), 'error': 'missing_image'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -111,7 +118,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             session = AttendanceSession.objects.get(id=session_id, status=AttendanceSession.ACTIVE)
         except AttendanceSession.DoesNotExist:
             return Response(
-                {'success': False, 'message': f'Active session {session_id} not found', 'error': 'session_not_found'},
+                {'success': False, 'message': str(MSG_ACTIVE_SESSION_NOT_FOUND).format(session_id=session_id), 'error': 'session_not_found'},
                 status=status.HTTP_404_NOT_FOUND
             )
         
@@ -120,7 +127,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             teacher = getattr(user, 'teacher_profile', None)
             if session.instructor and teacher and session.instructor != teacher:
                 return Response(
-                    {'success': False, 'message': 'You can only process your own sessions', 'error': 'permission_denied'},
+                    {'success': False, 'message': str(MSG_ONLY_OWN_SESSIONS), 'error': 'permission_denied'},
                     status=status.HTTP_403_FORBIDDEN
                 )
         
@@ -137,7 +144,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     'success': False,
-                    'message': detection_result.get('message', 'Face detection failed'),
+                    'message': detection_result.get('message', str(MSG_FACE_DETECTION_FAILED)),
                     'error': detection_result.get('error', 'detection_failed')
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -210,7 +217,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 'matches': matches,
                 'roster': roster,
                 'num_attendance_marked': session.total_attendance_marked,
-                'message': f'Processed {detection_result.get("num_faces_detected", 0)} face(s), updated {len(updated_records)} attendance record(s)',
+                'message': str(MSG_PROCESSING_RESULT).format(faces=detection_result.get("num_faces_detected", 0), records=len(updated_records)),
             },
             status=status.HTTP_200_OK
         )
@@ -278,8 +285,7 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
         duplicate = dup_qs.first()
         if duplicate:
             raise serializers.ValidationError(
-                f"An active session for '{class_name}' already exists today (ID: {duplicate.id}). "
-                "Complete or cancel it first."
+                str(MSG_DUPLICATE_ACTIVE_SESSION).format(class_name=class_name, session_id=duplicate.id)
             )
 
         save_kwargs = dict(date=today, status=AttendanceSession.ACTIVE)
@@ -339,7 +345,7 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         if session.status != AttendanceSession.ACTIVE:
             return Response(
-                {'success': False, 'message': f'Session is not active ({session.get_status_display()})', 'error': 'invalid_status'},
+                {'success': False, 'message': str(MSG_SESSION_NOT_ACTIVE).format(status=session.get_status_display()), 'error': 'invalid_status'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         session.complete()
@@ -371,7 +377,7 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
         if notifications_to_create:
             Notification.objects.bulk_create(notifications_to_create, ignore_conflicts=True)
 
-        return Response({'success': True, 'message': 'Session completed', 'session': self.get_serializer(session).data})
+        return Response({'success': True, 'message': str(MSG_SESSION_COMPLETED), 'session': self.get_serializer(session).data})
 
     @action(detail=True, methods=['post'], url_path='cancel', url_name='cancel-session')
     def cancel_session(self, request, pk=None):
@@ -379,8 +385,8 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         if session.status != AttendanceSession.ACTIVE:
             return Response(
-                {'success': False, 'message': f'Session is not active ({session.get_status_display()})', 'error': 'invalid_status'},
+                {'success': False, 'message': str(MSG_SESSION_NOT_ACTIVE).format(status=session.get_status_display()), 'error': 'invalid_status'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         session.cancel()
-        return Response({'success': True, 'message': 'Session cancelled', 'session': self.get_serializer(session).data})
+        return Response({'success': True, 'message': str(MSG_SESSION_CANCELLED), 'session': self.get_serializer(session).data})

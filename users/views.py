@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from smartSchool.messages import MSG_INVALID_ROLE, MSG_DASHBOARD_ERROR
 from .models import User
 from .serializers import UserCreateSerializer, UserSerializer, ProfileSerializer
 from .permissions import IsAdmin, IsAdminOrOwner
@@ -82,7 +83,7 @@ class UserViewSet(viewsets.ModelViewSet):
             users = User.objects.filter(role=role)
             serializer = self.get_serializer(users, many=True)
             return Response(serializer.data)
-        return Response({'error': 'Invalid role parameter'}, status=400)
+        return Response({'error': str(MSG_INVALID_ROLE)}, status=400)
 
     # ──────────────────────────────────────────────────────────────────────────
     # Admin dashboard aggregate  GET /api/users/admin-dashboard/
@@ -256,6 +257,6 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as exc:
             tb = traceback.format_exc()
             return Response(
-                {'detail': f'Dashboard error: {tb if dj_settings.DEBUG else str(exc)}'},
+                {'detail': str(MSG_DASHBOARD_ERROR).format(error=tb if dj_settings.DEBUG else str(exc))},
                 status=500,
             )

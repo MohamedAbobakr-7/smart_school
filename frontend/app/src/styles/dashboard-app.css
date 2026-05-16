@@ -1797,6 +1797,75 @@ tr.is-current-session td {
   opacity: 0.7;
 }
 
+/* ──── Language selector toggle (English | العربية) ──── */
+.lang-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.lang-selector-btn {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #78716c;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.lang-selector-btn:hover {
+  color: #44403c;
+  background: #f5f5f4;
+}
+
+.lang-selector-btn.is-active {
+  color: #1c1917;
+  font-weight: 600;
+}
+
+.lang-selector-divider {
+  color: #d6d3d1;
+  font-size: 0.65rem;
+  user-select: none;
+}
+
+/* ──── RTL adjustments for login page ──── */
+[dir="rtl"] .login-panel-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .login-panel-footer {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .login-footer-links {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .login-password-wrap {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .login-password-toggle {
+  right: auto;
+  left: 0.5rem;
+}
+
+[dir="rtl"] .login-submit-icon {
+  margin-inline-end: 0.4rem;
+  margin-inline-start: 0;
+}
+
+[dir="rtl"] .login-aside-corner {
+  left: auto;
+  right: 1rem;
+}
+
 .login-form {
   width: 100%;
   max-width: 22rem;
@@ -2350,6 +2419,23 @@ tr.is-current-session td {
   .login-footer-lang:hover {
     background: #292524;
     color: #e7e5e4;
+  }
+
+  .lang-selector-btn {
+    color: #78716c;
+  }
+
+  .lang-selector-btn:hover {
+    color: #d6d3d1;
+    background: #292524;
+  }
+
+  .lang-selector-btn.is-active {
+    color: #fafaf9;
+  }
+
+  .lang-selector-divider {
+    color: #44403c;
   }
 
   .login-error {

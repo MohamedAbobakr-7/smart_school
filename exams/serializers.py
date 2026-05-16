@@ -1,4 +1,9 @@
 from rest_framework import serializers
+from smartSchool.messages import (
+    MSG_OPTIONS_MUST_BE_LIST, MSG_MIN_OPTIONS,
+    MSG_CORRECT_ANSWER_INDEX, MSG_GRADE_DUPLICATE,
+    MSG_SCORE_EXCEEDS_TOTAL,
+)
 from .models import Exam, Question, Grade
 
 
@@ -11,7 +16,9 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = [
-            'id', 'exam', 'text', 'options', 'correct_answer',
+            'id', 'exam', 'text', 'text_en', 'text_ar',
+            'options', 'options_en', 'options_ar',
+            'correct_answer',
             'correct_answer_text', 'options_count',
             'created_at', 'updated_at'
         ]
@@ -31,14 +38,14 @@ class QuestionSerializer(serializers.ModelSerializer):
         correct_answer = data.get('correct_answer')
         
         if not isinstance(options, list):
-            raise serializers.ValidationError('Options must be a list/array')
+            raise serializers.ValidationError(str(MSG_OPTIONS_MUST_BE_LIST))
         
         if len(options) < 2:
-            raise serializers.ValidationError('At least 2 options are required for MCQ')
+            raise serializers.ValidationError(str(MSG_MIN_OPTIONS))
         
         if correct_answer is not None and correct_answer >= len(options):
             raise serializers.ValidationError(
-                f'correct_answer index ({correct_answer}) must be less than number of options ({len(options)})'
+                str(MSG_CORRECT_ANSWER_INDEX).format(index=correct_answer, count=len(options))
             )
         
         return data
@@ -58,7 +65,8 @@ class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
         fields = [
-            'id', 'name', 'exam_type', 'exam_type_display',
+            'id', 'name', 'name_en', 'name_ar',
+            'exam_type', 'exam_type_display',
             'subject', 'subject_name', 'subject_code',
             'teacher', 'teacher_name', 'teacher_id_display',
             'duration', 'exam_date', 'class_id',
@@ -132,7 +140,7 @@ class GradeSerializer(serializers.ModelSerializer):
             
             if existing.exists():
                 raise serializers.ValidationError(
-                    f'Grade already exists for this student and exam'
+                    str(MSG_GRADE_DUPLICATE)
                 )
         
         # Validate score doesn't exceed total questions
@@ -140,7 +148,7 @@ class GradeSerializer(serializers.ModelSerializer):
             total_questions = exam.get_questions_count()
             if total_questions > 0 and score > total_questions:
                 raise serializers.ValidationError(
-                    f'Score ({score}) cannot exceed total questions ({total_questions})'
+                    str(MSG_SCORE_EXCEEDS_TOTAL).format(score=score, total_questions=total_questions)
                 )
         
         return data

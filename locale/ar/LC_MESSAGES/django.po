@@ -1,0 +1,416 @@
+# Smart School Backend - Arabic translations.
+# Copyright (C) 2026 Smart School
+# This file is distributed under the same license as the Smart School package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Smart School Backend 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-16 01:06+0300\n"
+"PO-Revision-Date: 2026-05-16 01:30+0300\n"
+"Last-Translator: Smart School Developer\n"
+"Language-Team: Arabic <ar@li.org>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: .\attendance\models.py:23
+msgid "Present"
+msgstr "حاضر"
+
+#: .\attendance\models.py:24
+msgid "Absent"
+msgstr "غائب"
+
+#: .\attendance\models.py:32
+msgid "Manual"
+msgstr "يدوي"
+
+#: .\attendance\models.py:33
+msgid "Face Recognition"
+msgstr "التعرف على الوجه"
+
+#: .\attendance\models.py:147
+msgid "Active"
+msgstr "نشط"
+
+#: .\attendance\models.py:148
+msgid "Completed"
+msgstr "مكتمل"
+
+#: .\attendance\models.py:149
+msgid "Cancelled"
+msgstr "ملغي"
+
+#: .\exams\models.py:71
+msgid "Quiz"
+msgstr "اختبار قصير"
+
+#: .\exams\models.py:72
+msgid "Midterm"
+msgstr "اختبار نصفي"
+
+#: .\exams\models.py:73
+msgid "Final"
+msgstr "اختبار نهائي"
+
+#: .\exams\models.py:74
+msgid "Assignment"
+msgstr "مهمة"
+
+#: .\notifications\models.py:10
+msgid "Low Grade"
+msgstr "درجة متدنية"
+
+#: .\notifications\models.py:11 .\reports\models.py:13
+msgid "Attendance"
+msgstr "الحضور"
+
+#: .\notifications\models.py:12
+msgid "New Student Report"
+msgstr "تقرير طالب جديد"
+
+#: .\notifications\models.py:13
+msgid "New Weekly Report"
+msgstr "تقرير أسبوعي جديد"
+
+#: .\notifications\models.py:14
+msgid "System"
+msgstr "النظام"
+
+#: .\reports\models.py:11
+msgid "Academic"
+msgstr "أكاديمي"
+
+#: .\reports\models.py:12
+msgid "Behavioral"
+msgstr "سلوكي"
+
+#: .\reports\models.py:14
+msgid "General"
+msgstr "عام"
+
+#: .\reports\models.py:42
+msgid "School"
+msgstr "المدرسة"
+
+#: .\reports\models.py:43 .\users\models.py:9
+msgid "Teacher"
+msgstr "معلم"
+
+#: .\reports\models.py:46
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+#: .\reports\models.py:47
+msgid "Ready"
+msgstr "جاهز"
+
+#: .\reports\models.py:48
+msgid "Failed"
+msgstr "فشل"
+
+#: .\smartSchool\messages.py:4
+msgid "Resource not found."
+msgstr "المورد غير موجود."
+
+#: .\smartSchool\messages.py:5
+msgid "You do not have permission to perform this action."
+msgstr "ليس لديك صلاحية لتنفيذ هذا الإجراء."
+
+#: .\smartSchool\messages.py:6
+msgid "Invalid request."
+msgstr "طلب غير صالح."
+
+#: .\smartSchool\messages.py:7
+msgid "Operation completed successfully."
+msgstr "تمت العملية بنجاح."
+
+#: .\smartSchool\messages.py:8
+msgid "Created successfully."
+msgstr "تم الإنشاء بنجاح."
+
+#: .\smartSchool\messages.py:9
+msgid "Updated successfully."
+msgstr "تم التحديث بنجاح."
+
+#: .\smartSchool\messages.py:10
+msgid "Deleted successfully."
+msgstr "تم الحذف بنجاح."
+
+#: .\smartSchool\messages.py:13
+msgid "Login successful."
+msgstr "تم تسجيل الدخول بنجاح."
+
+#: .\smartSchool\messages.py:14
+msgid "Invalid credentials."
+msgstr "بيانات الدخول غير صالحة."
+
+#: .\smartSchool\messages.py:15
+msgid "Token has expired."
+msgstr "انتهت صلاحية الرمز."
+
+#: .\smartSchool\messages.py:16
+msgid "Invalid role parameter."
+msgstr "معامل الدور غير صالح."
+
+#: .\smartSchool\messages.py:17
+#, python-brace-format
+msgid "Dashboard error: {error}"
+msgstr "خطأ في لوحة التحكم: {error}"
+
+#: .\smartSchool\messages.py:20
+#, python-brace-format
+msgid "Successfully generated IDs for {count} student(s)."
+msgstr "تم إنشاء أرقام التعريف لعدد {count} طالب(طالبات) بنجاح."
+
+#: .\smartSchool\messages.py:21
+msgid "All students already have IDs. Nothing to update."
+msgstr "جميع الطلاب لديهم أرقام تعريف. لا شيء للتحديث."
+
+#: .\smartSchool\messages.py:22
+msgid "No image file provided. Send the image as \"photo\" field."
+msgstr "لم يتم تقديم ملف صورة. أرسل الصورة كحقل \"photo\"."
+
+#: .\smartSchool\messages.py:23
+#, python-brace-format
+msgid "Invalid file type: {content_type}. Please upload a JPEG or PNG image."
+msgstr "نوع ملف غير صالح: {content_type}. يرجى رفع صورة JPEG أو PNG."
+
+#: .\smartSchool\messages.py:24
+msgid "Face registration failed."
+msgstr "فشل تسجيل الوجه."
+
+#: .\smartSchool\messages.py:25
+msgid "Face registered successfully."
+msgstr "تم تسجيل الوجه بنجاح."
+
+#: .\smartSchool\messages.py:27
+msgid ""
+"Photo saved. After the student has a Student ID, open Edit and save again "
+"(or re-upload the photo) to register the face for attendance."
+msgstr ""
+"تم حفظ الصورة. بعد أن يحصل الطالب على رقم تعريف، افتح التعديل واحفظ "
+"مرة أخرى (أو أعد رفع الصورة) لتسجيل الوجه للحضور."
+
+#: .\smartSchool\messages.py:31
+msgid ""
+"Photo saved but face recognition service is unavailable. Start the service "
+"and retry."
+msgstr ""
+"تم حفظ الصورة ولكن خدمة التعرف على الوجه غير متاحة. ابدأ الخدمة "
+"وحاول مرة أخرى."
+
+#: .\smartSchool\messages.py:34
+msgid "Invalid date format. Use YYYY-MM-DD."
+msgstr "صيغة التاريخ غير صحيحة. استخدم YYYY-MM-DD."
+
+#: .\smartSchool\messages.py:37
+msgid "Only instructors can process classroom images."
+msgstr "يمكن للمعلمين فقط معالجة صور الفصل."
+
+#: .\smartSchool\messages.py:38
+msgid "session_id is required."
+msgstr "session_id مطلوب."
+
+#: .\smartSchool\messages.py:39
+msgid "image file is required."
+msgstr "ملف الصورة مطلوب."
+
+#: .\smartSchool\messages.py:40
+#, python-brace-format
+msgid "Active session {session_id} not found."
+msgstr "الجلسة النشطة {session_id} غير موجودة."
+
+#: .\smartSchool\messages.py:41
+msgid "You can only process your own sessions."
+msgstr "يمكنك معالجة جلساتك فقط."
+
+#: .\smartSchool\messages.py:42
+msgid "Face detection failed."
+msgstr "فشل اكتشاف الوجه."
+
+#: .\smartSchool\messages.py:43
+#, python-brace-format
+msgid "Processed {faces} face(s), updated {records} attendance record(s)."
+msgstr "تم معالجة {faces} وجه(وجوه)، وتحديث {records} سجل(سجلات) حضور."
+
+#: .\smartSchool\messages.py:45
+#, python-brace-format
+msgid ""
+"An active session for \"{class_name}\" already exists today (ID: "
+"{session_id}). Complete or cancel it first."
+msgstr ""
+"توجد جلسة نشطة لـ \"{class_name}\" اليوم بالفعل (رقم: "
+"{session_id}). أكملها أو ألغها أولاً."
+
+#: .\smartSchool\messages.py:48
+#, python-brace-format
+msgid "Session is not active ({status})."
+msgstr "الجلسة غير نشطة ({status})."
+
+#: .\smartSchool\messages.py:49
+msgid "Session completed."
+msgstr "تم إكمال الجلسة."
+
+#: .\smartSchool\messages.py:50
+msgid "Session cancelled."
+msgstr "تم إلغاء الجلسة."
+
+#: .\smartSchool\messages.py:51
+#, python-brace-format
+msgid "Attendance record already exists for this student on {date}."
+msgstr "سجل الحضور موجود بالفعل لهذا الطالب في {date}."
+
+#: .\smartSchool\messages.py:52
+#, python-brace-format
+msgid "Attendance record already exists for {student_id} on {date}."
+msgstr "سجل الحضور موجود بالفعل للطالب {student_id} في {date}."
+
+#: .\smartSchool\messages.py:53
+#, python-brace-format
+msgid "Face verified successfully for student {student_id}."
+msgstr "تم التحقق من الوجه بنجاح للطالب {student_id}."
+
+#: .\smartSchool\messages.py:56
+msgid "Options must be a list/array."
+msgstr "يجب أن تكون الخيارات قائمة/مصفوفة."
+
+#: .\smartSchool\messages.py:57
+msgid "At least 2 options are required for MCQ."
+msgstr "مطلوب خياران على الأقل لسؤال الاختيار من متعدد."
+
+#: .\smartSchool\messages.py:58
+#, python-brace-format
+msgid ""
+"correct_answer index ({index}) must be less than number of options ({count})."
+msgstr ""
+"فهرس correct_answer ({index}) يجب أن يكون أقل من عدد الخيارات ({count})."
+
+#: .\smartSchool\messages.py:59
+msgid "Grade already exists for this student and exam."
+msgstr "الدرجة موجودة بالفعل لهذا الطالب والاختبار."
+
+#: .\smartSchool\messages.py:60
+#, python-brace-format
+msgid "Score ({score}) cannot exceed total questions ({total_questions})."
+msgstr "النتيجة ({score}) لا يمكن أن تتجاوز عدد الأسئلة الكلي ({total_questions})."
+
+#: .\smartSchool\messages.py:63
+msgid "Class name is required."
+msgstr "اسم الفصل مطلوب."
+
+#: .\smartSchool\messages.py:64
+#, python-brace-format
+msgid "A class \"{label}\" already exists."
+msgstr "الفصل \"{label}\" موجود بالفعل."
+
+#: .\smartSchool\messages.py:67
+msgid "Message is required."
+msgstr "الرسالة مطلوبة."
+
+#: .\smartSchool\messages.py:68
+#, python-brace-format
+msgid "Message too long (max {max} characters)."
+msgstr "الرسالة طويلة جداً (الحد الأقصى {max} حرف)."
+
+#: .\smartSchool\messages.py:74
+msgid "No teacher profile."
+msgstr "لا يوجد ملف معلم."
+
+#: .\smartSchool\messages.py:75
+msgid "Only administrators can set all_teachers."
+msgstr "يمكن للمسؤولين فقط تعيين all_teachers."
+
+#: .\smartSchool\messages.py:76
+msgid "Only administrators can generate school-wide reports."
+msgstr "يمكن للمسؤولين فقط إنشاء تقارير على مستوى المدرسة."
+
+#: .\smartSchool\messages.py:77
+msgid "Teacher profile required."
+msgstr "ملف المعلم مطلوب."
+
+#: .\smartSchool\messages.py:78
+msgid "PDF not generated for this report."
+msgstr "لم يتم إنشاء PDF لهذا التقرير."
+
+#: .\smartSchool\messages.py:79
+msgid "PDF file missing on disk."
+msgstr "ملف PDF غير موجود على القرص."
+
+#: .\smartSchool\messages.py:80
+msgid ""
+"Provide both week_start and week_end, or neither for default previous week."
+msgstr ""
+"قدم week_start و week_end معاً، أو لا تقدم أي منهما للأسبوع السابق الافتراضي."
+
+#: .\smartSchool\messages.py:81
+msgid "week_end must be on or after week_start."
+msgstr "يجب أن يكون week_end في أو بعد week_start."
+
+#: .\smartSchool\messages.py:84
+msgid "No file."
+msgstr "لا يوجد ملف."
+
+#: .\smartSchool\messages.py:85
+msgid "File missing."
+msgstr "الملف غير موجود."
+
+#: .\smartSchool\messages.py:86
+msgid "You can only edit your own videos."
+msgstr "يمكنك تعديل مقاطع الفيديو الخاصة بك فقط."
+
+#: .\smartSchool\messages.py:87
+msgid "You can only delete your own videos."
+msgstr "يمكنك حذف مقاطع الفيديو الخاصة بك فقط."
+
+#: .\smartSchool\messages.py:88
+msgid "Only students can sync watch progress."
+msgstr "يمكن للطلاب فقط مزامنة تقدم المشاهدة."
+
+#: .\smartSchool\messages.py:91
+msgid "Smart School Backend API"
+msgstr "واجهة برمجة تطبيقات المدرسة الذكية"
+
+#: .\smartSchool\settings.py:175
+msgid "English"
+msgstr "الإنجليزية"
+
+#: .\smartSchool\settings.py:176
+msgid "Arabic"
+msgstr "العربية"
+
+#: .\users\models.py:8
+msgid "Admin"
+msgstr "مدير"
+
+#: .\users\models.py:10
+msgid "Student"
+msgstr "طالب"
+
+#: .\users\models.py:11
+msgid "Parent"
+msgstr "ولي أمر"
+
+#: .\videos\models.py:19
+msgid "Lecture"
+msgstr "محاضرة"
+
+#: .\videos\models.py:20
+msgid "Tutorial"
+msgstr "دورة تعليمية"
+
+#: .\videos\models.py:21
+msgid "Review"
+msgstr "مراجعة"
+
+#: .\videos\models.py:22
+msgid "Lab / Demo"
+msgstr "معمل / عرض"
+
+#: .\videos\models.py:23
+msgid "Other"
+msgstr "أخرى"

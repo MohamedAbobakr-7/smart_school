@@ -4,7 +4,7 @@ FastAPI Face Recognition Service for Smart School Backend
 This service handles face recognition for attendance tracking.
 """
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -17,6 +17,7 @@ import asyncio
 from pathlib import Path
 import pyodbc
 from datetime import datetime
+from translations import get_message, resolve_lang
 
 app = FastAPI(
     title="Face Recognition Service",
@@ -65,7 +66,7 @@ class FaceVerificationResponse(BaseModel):
     message: str
 
 
-def get_db_connection():
+def get_db_connection(lang='en'):
     """Get database connection"""
     try:
         conn_str = (
@@ -78,7 +79,7 @@ def get_db_connection():
         conn = pyodbc.connect(conn_str)
         return conn
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database connection error: {str(e)}")
+        raise HTTPException(status_code=500, detail=get_message('db_connection_error', lang, error=str(e)))
 
 
 def get_student_face_encoding(student_id: str) -> Optional[np.ndarray]:
@@ -255,12 +256,13 @@ def list_all_encodings() -> list:
     return encodings
 
 
-def validate_encoding_file(student_id: str) -> dict:
+def validate_encoding_file(student_id: str, lang='en') -> dict:
     """
     Validate encoding file integrity
     
     Args:
         student_id: Student ID
+        lang: Language code for error messages ('en' or 'ar')
         
     Returns:
         Dictionary with validation results
@@ -276,7 +278,7 @@ def validate_encoding_file(student_id: str) -> dict:
     }
     
     if not encoding_file.exists():
-        result['errors'].append("Encoding file does not exist")
+        result['errors'].append(get_message('encoding_file_not_exist', lang))
         return result
     
     result['exists'] = True
@@ -284,20 +286,20 @@ def validate_encoding_file(student_id: str) -> dict:
     try:
         metadata = get_student_face_encoding_metadata(student_id)
         if metadata is None:
-            result['errors'].append("Failed to load encoding file")
+            result['errors'].append(get_message('encoding_load_failed', lang))
             return result
         
         encoding = metadata.get('encoding')
         if encoding is None:
-            result['errors'].append("No encoding found in file")
+            result['errors'].append(get_message('no_encoding_in_file', lang))
             return result
         
         if not isinstance(encoding, np.ndarray):
-            result['errors'].append("Encoding is not a numpy array")
+            result['errors'].append(get_message('encoding_not_numpy', lang))
             return result
         
         if encoding.shape != (128,):
-            result['errors'].append(f"Invalid encoding shape: {encoding.shape}, expected (128,)")
+            result['errors'].append(get_message('invalid_encoding_shape', lang, shape=encoding.shape))
             return result
         
         result['has_encoding'] = True
@@ -309,23 +311,24 @@ def validate_encoding_file(student_id: str) -> dict:
         }
         
     except Exception as e:
-        result['errors'].append(f"Validation error: {str(e)}")
+        result['errors'].append(get_message('validation_error', lang, error=str(e)))
     
     return result
 
 
-def verify_student_exists(student_id: str) -> bool:
+def verify_student_exists(student_id: str, lang='en') -> bool:
     """
     Verify that student exists in the database
     
     Args:
         student_id: Student ID
+        lang: Language code for error messages ('en' or 'ar')
         
     Returns:
         True if student exists, False otherwise
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection(lang)
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM students WHERE student_id = ?", (student_id,))
         count = cursor.fetchone()[0]
@@ -389,7 +392,7 @@ def process_image(image_bytes: bytes) -> tuple[Optional[np.ndarray], Optional[di
         return None, None
 
 
-def process_image_batch(image_bytes: bytes, model: str = 'hog', num_jitters: int = 1) -> tuple[list, dict]:
+def process_image_batch(image_bytes: bytes, model: str = 'hog', num_jitters: int = 1, lang: str = 'en') -> tuple[list, dict]:
     """
     Process image and extract ALL face encodings (batch detection)
     
@@ -397,6 +400,7 @@ def process_image_batch(image_bytes: bytes, model: str = 'hog', num_jitters: int
         image_bytes: Image file bytes
         model: Detection model - 'hog' (faster, less accurate) or 'cnn' (slower, more accurate)
         num_jitters: Number of times to re-sample the face when calculating encoding (higher = more accurate)
+        lang: Language code for messages ('en' or 'ar')
         
     Returns:
         Tuple of (list of face encodings, image metadata dict)
@@ -435,7 +439,7 @@ def process_image_batch(image_bytes: bytes, model: str = 'hog', num_jitters: int
         
         if len(face_locations) == 0:
             image_info['num_faces_detected'] = 0
-            image_info['message'] = 'No faces detected. Try: better lighting, higher resolution, or different angle.'
+            image_info['message'] = get_message('no_faces_detected_try', lang)
             return [], image_info
         
         # Get all face encodings with jittering for better accuracy
@@ -545,6 +549,7 @@ async def root():
 
 @app.post("/verify-face", response_model=FaceVerificationResponse)
 async def verify_face(
+    request: Request,
     student_id: str,
     image: UploadFile = File(...)
 ):
@@ -552,17 +557,20 @@ async def verify_face(
     Verify if the uploaded face image matches the registered face for the student
     
     Args:
+        request: FastAPI Request object (for language detection)
         student_id: Student ID to verify against
         image: Image file containing face
         
     Returns:
         FaceVerificationResponse with match result
     """
+    lang = resolve_lang(request)
+    
     # Verify student exists
-    if not verify_student_exists(student_id):
+    if not verify_student_exists(student_id, lang):
         raise HTTPException(
             status_code=404,
-            detail=f"Student with ID {student_id} not found"
+            detail=get_message('student_not_found', lang, student_id=student_id)
         )
     
     # Check if student has registered face
@@ -571,7 +579,7 @@ async def verify_face(
         return FaceVerificationResponse(
             match=False,
             student_id=student_id,
-            message=f"No face registered for student {student_id}. Please register face first."
+            message=get_message('no_face_registered', lang, student_id=student_id)
         )
     
     # Read image file
@@ -583,7 +591,7 @@ async def verify_face(
     if face_encoding is None:
         raise HTTPException(
             status_code=400,
-            detail="No face detected in the image. Please upload an image with a clear face."
+            detail=get_message('no_face_detected', lang)
         )
     
     # Compare faces
@@ -601,19 +609,20 @@ async def verify_face(
             match=True,
             student_id=student_id,
             confidence=round(confidence, 2),
-            message=f"Face verified successfully for student {student_id}"
+            message=get_message('face_verified', lang, student_id=student_id)
         )
     else:
         return FaceVerificationResponse(
             match=False,
             student_id=student_id,
             confidence=round(confidence, 2),
-            message=f"Face does not match registered face for student {student_id}"
+            message=get_message('face_not_matched', lang, student_id=student_id)
         )
 
 
 @app.post("/register-face")
 async def register_face(
+    request: Request,
     student_id: str,
     image: UploadFile = File(...)
 ):
@@ -621,17 +630,20 @@ async def register_face(
     Register a face encoding for a student
     
     Args:
+        request: FastAPI Request object (for language detection)
         student_id: Student ID
         image: Image file containing face to register
         
     Returns:
         Success message
     """
+    lang = resolve_lang(request)
+    
     # Verify student exists
-    if not verify_student_exists(student_id):
+    if not verify_student_exists(student_id, lang):
         raise HTTPException(
             status_code=404,
-            detail=f"Student with ID {student_id} not found"
+            detail=get_message('student_not_found', lang, student_id=student_id)
         )
     
     # Read image file
@@ -643,7 +655,7 @@ async def register_face(
     if face_encoding is None:
         raise HTTPException(
             status_code=400,
-            detail="No face detected in the image. Please upload an image with a clear face."
+            detail=get_message('no_face_detected', lang)
         )
     
     # Save face encoding with metadata
@@ -654,7 +666,7 @@ async def register_face(
     
     return {
         "success": True,
-        "message": f"Face registered successfully for student {student_id}",
+        "message": get_message('face_registered', lang, student_id=student_id),
         "student_id": student_id,
         "created_at": metadata.get('created_at') if metadata else None,
         "image_info": image_info
@@ -662,21 +674,24 @@ async def register_face(
 
 
 @app.get("/students/{student_id}/face-status")
-async def get_face_status(student_id: str):
+async def get_face_status(request: Request, student_id: str):
     """
     Check if a student has a registered face with metadata
     
     Args:
+        request: FastAPI Request object (for language detection)
         student_id: Student ID
         
     Returns:
         Status of face registration with metadata
     """
+    lang = resolve_lang(request)
+    
     # Verify student exists
-    if not verify_student_exists(student_id):
+    if not verify_student_exists(student_id, lang):
         raise HTTPException(
             status_code=404,
-            detail=f"Student with ID {student_id} not found"
+            detail=get_message('student_not_found', lang, student_id=student_id)
         )
     
     metadata = get_student_face_encoding_metadata(student_id)
@@ -685,7 +700,7 @@ async def get_face_status(student_id: str):
     response = {
         "student_id": student_id,
         "has_registered_face": has_face,
-        "message": "Face registered" if has_face else "No face registered"
+        "message": get_message('face_registered_short', lang) if has_face else get_message('no_face_registered_short', lang)
     }
     
     if has_face and metadata:
@@ -715,21 +730,24 @@ async def list_encodings():
 
 
 @app.delete("/encodings/{student_id}")
-async def delete_encoding(student_id: str):
+async def delete_encoding(request: Request, student_id: str):
     """
     Delete face encoding for a student
     
     Args:
+        request: FastAPI Request object (for language detection)
         student_id: Student ID
         
     Returns:
         Success message
     """
+    lang = resolve_lang(request)
+    
     # Verify student exists
-    if not verify_student_exists(student_id):
+    if not verify_student_exists(student_id, lang):
         raise HTTPException(
             status_code=404,
-            detail=f"Student with ID {student_id} not found"
+            detail=get_message('student_not_found', lang, student_id=student_id)
         )
     
     deleted = delete_student_face_encoding(student_id)
@@ -737,41 +755,45 @@ async def delete_encoding(student_id: str):
     if not deleted:
         raise HTTPException(
             status_code=404,
-            detail=f"No face encoding found for student {student_id}"
+            detail=get_message('no_face_encoding_found', lang, student_id=student_id)
         )
     
     return {
         "success": True,
-        "message": f"Face encoding deleted successfully for student {student_id}",
+        "message": get_message('face_encoding_deleted', lang, student_id=student_id),
         "student_id": student_id
     }
 
 
 @app.get("/encodings/{student_id}/validate")
-async def validate_encoding(student_id: str):
+async def validate_encoding(request: Request, student_id: str):
     """
     Validate face encoding file integrity
     
     Args:
+        request: FastAPI Request object (for language detection)
         student_id: Student ID
         
     Returns:
         Validation results
     """
+    lang = resolve_lang(request)
+    
     # Verify student exists
-    if not verify_student_exists(student_id):
+    if not verify_student_exists(student_id, lang):
         raise HTTPException(
             status_code=404,
-            detail=f"Student with ID {student_id} not found"
+            detail=get_message('student_not_found', lang, student_id=student_id)
         )
     
-    validation_result = validate_encoding_file(student_id)
+    validation_result = validate_encoding_file(student_id, lang)
     
     return validation_result
 
 
 @app.post("/encodings/{student_id}/update")
 async def update_encoding(
+    request: Request,
     student_id: str,
     image: UploadFile = File(...)
 ):
@@ -779,17 +801,20 @@ async def update_encoding(
     Update face encoding for a student (re-register face)
     
     Args:
+        request: FastAPI Request object (for language detection)
         student_id: Student ID
         image: New image file containing face
         
     Returns:
         Success message with new metadata
     """
+    lang = resolve_lang(request)
+    
     # Verify student exists
-    if not verify_student_exists(student_id):
+    if not verify_student_exists(student_id, lang):
         raise HTTPException(
             status_code=404,
-            detail=f"Student with ID {student_id} not found"
+            detail=get_message('student_not_found', lang, student_id=student_id)
         )
     
     # Read image file
@@ -801,7 +826,7 @@ async def update_encoding(
     if face_encoding is None:
         raise HTTPException(
             status_code=400,
-            detail="No face detected in the image. Please upload an image with a clear face."
+            detail=get_message('no_face_detected', lang)
         )
     
     # Save face encoding with metadata (will create backup of old one)
@@ -812,22 +837,23 @@ async def update_encoding(
     
     return {
         "success": True,
-        "message": f"Face encoding updated successfully for student {student_id}",
+        "message": get_message('face_encoding_updated', lang, student_id=student_id),
         "student_id": student_id,
         "created_at": metadata.get('created_at') if metadata else None,
         "image_info": image_info
     }
 
 
-def _run_batch_detection(image_bytes: bytes, model: str, num_jitters: int, tolerance: float):
+def _run_batch_detection(image_bytes: bytes, model: str, num_jitters: int, tolerance: float, lang: str = 'en'):
     """Run CPU-bound batch detection in a thread (called via asyncio.to_thread)."""
-    face_encodings, image_info = process_image_batch(image_bytes, model=model, num_jitters=num_jitters)
+    face_encodings, image_info = process_image_batch(image_bytes, model=model, num_jitters=num_jitters, lang=lang)
     matches = match_faces_batch(face_encodings, tolerance) if face_encodings else []
     return face_encodings, image_info, matches
 
 
 @app.post("/detect-faces-batch")
 async def detect_faces_batch(
+    request: Request,
     image: UploadFile = File(...),
     tolerance: float = 0.6,
     model: str = 'hog',
@@ -841,6 +867,7 @@ async def detect_faces_batch(
     all faces to students.
     
     Args:
+        request: FastAPI Request object (for language detection)
         image: Image file containing multiple faces
         tolerance: Face matching tolerance (0.0-1.0, lower = more strict)
         model: Detection model - 'hog' (faster, default) or 'cnn' (slower, more accurate)
@@ -852,19 +879,20 @@ async def detect_faces_batch(
         - matches: List of match results for each face
         - image_info: Image metadata
     """
+    lang = resolve_lang(request)
     image_bytes = await image.read()
     
     # Run CPU-bound face detection and matching in a thread pool to avoid blocking the event loop
     loop = asyncio.get_event_loop()
     if hasattr(asyncio, 'to_thread'):
         face_encodings, image_info, matches = await asyncio.to_thread(
-            _run_batch_detection, image_bytes, model, num_jitters, tolerance
+            _run_batch_detection, image_bytes, model, num_jitters, tolerance, lang
         )
     else:
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as pool:
             face_encodings, image_info, matches = await loop.run_in_executor(
-                pool, lambda: _run_batch_detection(image_bytes, model, num_jitters, tolerance)
+                pool, lambda: _run_batch_detection(image_bytes, model, num_jitters, tolerance, lang)
             )
     
     if len(face_encodings) == 0:
@@ -873,7 +901,7 @@ async def detect_faces_batch(
             "num_faces_detected": 0,
             "matches": [],
             "image_info": image_info,
-            "message": "No faces detected in the image"
+            "message": get_message('no_faces_detected_batch', lang)
         }
     
     # Add face locations to matches if available
@@ -891,7 +919,7 @@ async def detect_faces_batch(
         "num_matches": successful_matches,
         "matches": matches,
         "image_info": image_info,
-        "message": f"Detected {len(face_encodings)} face(s), matched {successful_matches} student(s)"
+        "message": get_message('faces_detected_matched', lang, num_faces=len(face_encodings), num_matches=successful_matches)
     }
 
 

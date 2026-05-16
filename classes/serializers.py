@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from smartSchool.messages import MSG_CLASS_NAME_REQUIRED, MSG_CLASS_ALREADY_EXISTS
 from .models import SchoolClass
 
 
@@ -8,8 +9,10 @@ class SchoolClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = SchoolClass
         fields = [
-            'id', 'name', 'section', 'display_name',
-            'description', 'created_at', 'updated_at',
+            'id', 'name', 'name_en', 'name_ar',
+            'section', 'display_name',
+            'description', 'description_en', 'description_ar',
+            'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'display_name', 'created_at', 'updated_at']
 
@@ -17,7 +20,7 @@ class SchoolClassSerializer(serializers.ModelSerializer):
         name = data.get('name', getattr(self.instance, 'name', '')).strip()
         section = data.get('section', getattr(self.instance, 'section', '')).strip()
         if not name:
-            raise serializers.ValidationError({'name': 'Class name is required.'})
+            raise serializers.ValidationError({'name': str(MSG_CLASS_NAME_REQUIRED)})
         # Uniqueness check excluding current instance on update
         qs = SchoolClass.objects.filter(name=name, section=section)
         if self.instance:
@@ -25,7 +28,7 @@ class SchoolClassSerializer(serializers.ModelSerializer):
         if qs.exists():
             label = f"{name} - {section}" if section else name
             raise serializers.ValidationError(
-                f'A class "{label}" already exists.'
+                str(MSG_CLASS_ALREADY_EXISTS).format(label=label)
             )
         data['name'] = name
         data['section'] = section

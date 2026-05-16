@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { STORAGE_KEY as LANG_STORAGE_KEY } from '../i18n'
 
 const ROLE_HOME = {
   ADMIN: '/admin',
@@ -12,6 +13,11 @@ export function homePathForRole(role) {
   return ROLE_HOME[role] || '/login'
 }
 
+/** Helper: read persisted language for API headers */
+function getLang() {
+  return localStorage.getItem(LANG_STORAGE_KEY) || 'en'
+}
+
 export const useAuthStore = create(
   persist(
     (set) => ({
@@ -22,7 +28,11 @@ export const useAuthStore = create(
       login: async (username, password) => {
         const res = await fetch('/api/auth/login/', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'Accept-Language': getLang(),
+          },
           body: JSON.stringify({ username, password }),
         })
         const data = await res.json().catch(() => ({}))

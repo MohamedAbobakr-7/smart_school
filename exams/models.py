@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 
 class Exam(models.Model):
@@ -67,10 +68,10 @@ class Exam(models.Model):
     ASSIGNMENT = 'assignment'
     
     EXAM_TYPE_CHOICES = [
-        (QUIZ, 'Quiz'),
-        (MIDTERM, 'Midterm'),
-        (FINAL, 'Final'),
-        (ASSIGNMENT, 'Assignment'),
+        (QUIZ, _('Quiz')),
+        (MIDTERM, _('Midterm')),
+        (FINAL, _('Final')),
+        (ASSIGNMENT, _('Assignment')),
     ]
 
     exam_type = models.CharField(
@@ -171,17 +172,20 @@ class Question(models.Model):
     def clean(self):
         """Validate the question"""
         from django.core.exceptions import ValidationError
+        from smartSchool.messages import (
+            MSG_CORRECT_ANSWER_INDEX, MSG_MIN_OPTIONS, MSG_OPTIONS_MUST_BE_LIST,
+        )
         
         # Validate that correct_answer is within options range
         if self.options and isinstance(self.options, list):
             if self.correct_answer >= len(self.options):
                 raise ValidationError(
-                    f'correct_answer index ({self.correct_answer}) must be less than number of options ({len(self.options)})'
+                    str(MSG_CORRECT_ANSWER_INDEX).format(index=self.correct_answer, count=len(self.options))
                 )
             if len(self.options) < 2:
-                raise ValidationError('At least 2 options are required for MCQ')
+                raise ValidationError(str(MSG_MIN_OPTIONS))
         else:
-            raise ValidationError('Options must be a list/array')
+            raise ValidationError(str(MSG_OPTIONS_MUST_BE_LIST))
     
     def save(self, *args, **kwargs):
         """Override save to call clean validation"""

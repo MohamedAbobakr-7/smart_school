@@ -7,6 +7,12 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from smartSchool.messages import (
+    MSG_FORBIDDEN, MSG_NO_TEACHER_PROFILE,
+    MSG_ADMIN_ALL_TEACHERS_ONLY, MSG_ADMIN_SCHOOL_REPORTS_ONLY,
+    MSG_TEACHER_PROFILE_REQUIRED, MSG_PDF_NOT_GENERATED,
+    MSG_PDF_MISSING_ON_DISK,
+)
 from users.permissions import IsAdminOrTeacher
 
 from .models import Report, WeeklyReport
@@ -106,7 +112,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
         """
         user = request.user
         if not (user.is_admin() or user.is_teacher()):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'detail': str(MSG_FORBIDDEN)}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             weeks = int(request.query_params.get('weeks', '8'))
@@ -126,7 +132,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             tp = getattr(user, 'teacher_profile', None)
             if not tp:
-                return Response({'detail': 'No teacher profile'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'detail': str(MSG_NO_TEACHER_PROFILE)}, status=status.HTTP_403_FORBIDDEN)
             trend_qs = (
                 WeeklyReport.objects.filter(
                     status=WeeklyReport.Status.READY,
@@ -181,7 +187,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
 
         user = request.user
         if not user.has_any_admin_or_teacher():
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'detail': str(MSG_FORBIDDEN)}, status=status.HTTP_403_FORBIDDEN)
 
         if data.get('week_start') and data.get('week_end'):
             week_start = data['week_start']
@@ -195,7 +201,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
         if all_teachers:
             if not user.is_admin():
                 return Response(
-                    {'detail': 'Only administrators can set all_teachers.'},
+                    {'detail': str(MSG_ADMIN_ALL_TEACHERS_ONLY)},
                     status=status.HTTP_403_FORBIDDEN,
                 )
             reports = generate_school_and_teacher_reports(
@@ -210,7 +216,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
         if scope == WeeklyReport.Scope.SCHOOL:
             if not user.is_admin():
                 return Response(
-                    {'detail': 'Only administrators can generate school-wide reports.'},
+                    {'detail': str(MSG_ADMIN_SCHOOL_REPORTS_ONLY)},
                     status=status.HTTP_403_FORBIDDEN,
                 )
             report = upsert_weekly_report(
@@ -219,7 +225,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             if not hasattr(user, 'teacher_profile'):
                 return Response(
-                    {'detail': 'Teacher profile required.'},
+                    {'detail': str(MSG_TEACHER_PROFILE_REQUIRED)},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             report = upsert_weekly_report(
@@ -239,10 +245,10 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
     def download_pdf(self, request, pk=None):
         report = self.get_object()
         if not report.pdf_file or not report.pdf_file.name:
-            raise Http404('PDF not generated for this report.')
+            raise Http404(str(MSG_PDF_NOT_GENERATED))
         try:
             f = report.pdf_file.open('rb')
         except FileNotFoundError:
-            raise Http404('PDF file missing on disk.')
+            raise Http404(str(MSG_PDF_MISSING_ON_DISK))
         filename = os.path.basename(report.pdf_file.name) or 'weekly_report.pdf'
         return FileResponse(f, as_attachment=True, filename=filename)

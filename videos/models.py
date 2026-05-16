@@ -2,6 +2,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 import os
 
 
@@ -15,11 +16,11 @@ class Video(models.Model):
     """
 
     class Category(models.TextChoices):
-        LECTURE = "lecture", "Lecture"
-        TUTORIAL = "tutorial", "Tutorial"
-        REVIEW = "review", "Review"
-        LAB = "lab", "Lab / Demo"
-        OTHER = "other", "Other"
+        LECTURE = "lecture", _("Lecture")
+        TUTORIAL = "tutorial", _("Tutorial")
+        REVIEW = "review", _("Review")
+        LAB = "lab", _("Lab / Demo")
+        OTHER = "other", _("Other")
 
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)

@@ -1,12 +1,20 @@
 import { useAuthStore } from '../stores/authStore'
+import { STORAGE_KEY as LANG_STORAGE_KEY } from '../i18n'
+
+/** Read persisted language for API headers */
+function getLang() {
+  return localStorage.getItem(LANG_STORAGE_KEY) || 'en'
+}
 
 /**
  * Fetch JSON from the API with Bearer token when logged in.
+ * Automatically includes Accept-Language header from persisted preference.
  */
 export async function apiFetch(path, options = {}) {
   const { access } = useAuthStore.getState()
   const headers = {
     Accept: 'application/json',
+    'Accept-Language': getLang(),
     ...(options.headers || {}),
   }
   if (access && !headers.Authorization) {
@@ -45,7 +53,7 @@ export async function apiFetchAll(path) {
 
   while (url) {
     const res = await fetch(url, {
-      headers: { Accept: 'application/json', ...authHeader },
+      headers: { Accept: 'application/json', 'Accept-Language': getLang(), ...authHeader },
     })
     if (!res.ok) {
       // Re-expose the raw response so callers can throw a meaningful error

@@ -7,6 +7,11 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from smartSchool.messages import (
+    MSG_NO_FILE, MSG_FILE_MISSING,
+    MSG_EDIT_OWN_VIDEOS_ONLY, MSG_DELETE_OWN_VIDEOS_ONLY,
+    MSG_STUDENT_SYNC_ONLY,
+)
 from users.permissions import IsAdmin, IsAdminOrTeacher
 
 from .authentication import JWTAccessQueryAuthentication
@@ -73,14 +78,14 @@ class VideoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_teacher() and hasattr(user, "teacher_profile"):
             if serializer.instance.uploaded_by_id != user.teacher_profile.id:
-                raise PermissionDenied("You can only edit your own videos.")
+                raise PermissionDenied(str(MSG_EDIT_OWN_VIDEOS_ONLY))
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
         if user.is_teacher() and hasattr(user, "teacher_profile"):
             if instance.uploaded_by_id != user.teacher_profile.id:
-                raise PermissionDenied("You can only delete your own videos.")
+                raise PermissionDenied(str(MSG_DELETE_OWN_VIDEOS_ONLY))
         instance.delete()
 
     @action(
@@ -93,10 +98,10 @@ class VideoViewSet(viewsets.ModelViewSet):
     def stream(self, request, pk=None):
         video = self.get_object()
         if not video.video_file:
-            return Response({"detail": "No file."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": str(MSG_NO_FILE)}, status=status.HTTP_404_NOT_FOUND)
         path = video.video_file.path
         if not os.path.isfile(path):
-            return Response({"detail": "File missing."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": str(MSG_FILE_MISSING)}, status=status.HTTP_404_NOT_FOUND)
         return file_streaming_response(path, request, content_type=_video_content_type(path))
 
 
@@ -131,7 +136,7 @@ class VideoProgressViewSet(viewsets.ReadOnlyModelViewSet):
     def sync(self, request):
         if not request.user.is_student() or not hasattr(request.user, "student_profile"):
             return Response(
-                {"detail": "Only students can sync watch progress."},
+                {"detail": str(MSG_STUDENT_SYNC_ONLY)},
                 status=status.HTTP_403_FORBIDDEN,
             )
         ser = VideoProgressSyncSerializer(data=request.data, context={"request": request})

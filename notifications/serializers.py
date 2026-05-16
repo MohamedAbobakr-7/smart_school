@@ -9,8 +9,8 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "notification_type",
-            "title",
-            "body",
+            "title", "title_en", "title_ar",
+            "body", "body_en", "body_ar",
             "metadata",
             "read_at",
             "dedupe_key",
@@ -24,7 +24,7 @@ class NotificationPushSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ["id", "notification_type", "title", "body", "metadata", "created_at"]
+        fields = ["id", "notification_type", "title", "title_en", "title_ar", "body", "body_en", "body_ar", "metadata", "created_at"]
 
 
 class NotificationPreferenceSerializer(serializers.ModelSerializer):

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { homePathForRole, useAuthStore } from '../stores/authStore'
+import { LanguageSelector } from '../components/auth/LanguageSelector'
 
 /** Inline illustration: dashboard + attendance + school figures (no raster assets). */
 function LoginAsideIllustration() {
@@ -116,14 +118,6 @@ function IconEye({ className }) {
   )
 }
 
-function IconChevronDown({ className }) {
-  return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7 10l5 5 5-5H7z" fill="currentColor" />
-    </svg>
-  )
-}
-
 function AsideRings() {
   return (
     <svg className="login-aside-rings" viewBox="0 0 420 420" aria-hidden="true">
@@ -138,6 +132,7 @@ function AsideRings() {
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const access = useAuthStore((s) => s.access)
   const user = useAuthStore((s) => s.user)
   const login = useAuthStore((s) => s.login)
@@ -166,7 +161,7 @@ export function LoginPage() {
         navigate(home, { replace: true })
       }
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(err.message || t('general.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -183,10 +178,10 @@ export function LoginPage() {
             <AsideRings />
             <div className="login-aside-body">
               <p className="login-aside-tagline">
-                Learning, attendance, and grades — one connected platform for your school community.
+                {t('login.asideTagline')}
               </p>
               <div className="login-aside-head-block">
-                <h1 className="login-aside-headline">Manage your school</h1>
+                <h1 className="login-aside-headline">{t('login.asideHeadline')}</h1>
               </div>
               <div className="login-aside-visual">
                 <LoginAsideIllustration />
@@ -199,27 +194,27 @@ export function LoginPage() {
 
           <div className="login-panel">
             <header className="login-panel-header">
-              <span className="login-wordmark">Smart School</span>
+              <span className="login-wordmark">{t('login.wordmark')}</span>
               <a className="login-panel-help" href="#" onClick={(e) => e.preventDefault()}>
                 <IconHelp className="login-panel-help-icon" />
-                Help
+                {t('login.help')}
               </a>
             </header>
 
             <div className="login-panel-main">
               <form className="login-form" onSubmit={handleSubmit} noValidate>
-                <h2 className="login-form-title">Sign In</h2>
+                <h2 className="login-form-title">{t('login.title')}</h2>
 
                 <div className="login-field">
                   <label className="login-label" htmlFor="login-username">
-                    Username or student ID
+                    {t('login.usernameLabel')}
                   </label>
                   <input
                     id="login-username"
                     className="login-input login-input--plain"
                     name="username"
                     autoComplete="username"
-                    placeholder="Staff: username · Students: school ID"
+                    placeholder={t('login.usernamePlaceholder')}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -228,7 +223,7 @@ export function LoginPage() {
 
                 <div className="login-field">
                   <label className="login-label" htmlFor="login-password">
-                    Password
+                    {t('login.passwordLabel')}
                   </label>
                   <div className="login-password-wrap">
                     <input
@@ -237,7 +232,7 @@ export function LoginPage() {
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
-                      placeholder="Enter your password"
+                      placeholder={t('login.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -246,7 +241,7 @@ export function LoginPage() {
                       type="button"
                       className={`login-password-toggle${showPassword ? ' is-active' : ''}`}
                       onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                       aria-pressed={showPassword}
                     >
                       <IconEye className="login-password-toggle-icon" />
@@ -263,21 +258,18 @@ export function LoginPage() {
 
                 <button type="submit" className="login-submit login-submit--pill" disabled={loading}>
                   <IconSignIn className="login-submit-icon" />
-                  {loading ? 'Signing in…' : 'Sign In'}
+                  {loading ? t('login.submitting') : t('login.submit')}
                 </button>
               </form>
             </div>
 
             <footer className="login-panel-footer">
-              <span className="login-footer-copy">© {year} Smart School</span>
+              <span className="login-footer-copy">{t('login.footerCopy', { year })}</span>
               <div className="login-footer-links">
                 <a className="login-footer-link" href="#" onClick={(e) => e.preventDefault()}>
-                  Contact us
+                  {t('login.contactUs')}
                 </a>
-                <button type="button" className="login-footer-lang">
-                  English
-                  <IconChevronDown className="login-footer-lang-chevron" />
-                </button>
+                <LanguageSelector />
               </div>
             </footer>
           </div>

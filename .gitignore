@@ -48,3 +48,10 @@ venv.bak/
 .DS_Store
 Thumbs.db
 
+# Django i18n
+*.mo
+
+# Gettext tools (temporary download)
+gettext.zip
+gettext/
+

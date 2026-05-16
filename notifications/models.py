@@ -1,16 +1,17 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Notification(models.Model):
     """In-app notification with typed payload for smart school alerts."""
 
     class Type(models.TextChoices):
-        LOW_GRADE = "LOW_GRADE", "Low grade alert"
-        ATTENDANCE = "ATTENDANCE", "Attendance alert"
-        NEW_STUDENT_REPORT = "NEW_STUDENT_REPORT", "New student report"
-        NEW_WEEKLY_REPORT = "NEW_WEEKLY_REPORT", "New weekly report"
-        SYSTEM = "SYSTEM", "System"
+        LOW_GRADE = "LOW_GRADE", _("Low Grade")
+        ATTENDANCE = "ATTENDANCE", _("Attendance")
+        NEW_STUDENT_REPORT = "NEW_STUDENT_REPORT", _("New Student Report")
+        NEW_WEEKLY_REPORT = "NEW_WEEKLY_REPORT", _("New Weekly Report")
+        SYSTEM = "SYSTEM", _("System")
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,

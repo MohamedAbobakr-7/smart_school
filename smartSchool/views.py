@@ -4,6 +4,8 @@ Root views for smartSchool project
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 
+from smartSchool.messages import MSG_API_ROOT
+
 
 @require_http_methods(["GET"])
 def api_root(request):
@@ -13,7 +15,7 @@ def api_root(request):
     base_url = request.build_absolute_uri('/api/')
     
     return JsonResponse({
-        'message': 'Smart School Backend API',
+        'message': str(MSG_API_ROOT),
         'version': '1.0.0',
         'endpoints': {
             'authentication': {

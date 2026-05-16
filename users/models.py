@@ -1,13 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        ADMIN = 'ADMIN', 'Admin'
-        TEACHER = 'TEACHER', 'Teacher'
-        STUDENT = 'STUDENT', 'Student'
-        PARENT = 'PARENT', 'Parent'
+        ADMIN = 'ADMIN', _('Admin')
+        TEACHER = 'TEACHER', _('Teacher')
+        STUDENT = 'STUDENT', _('Student')
+        PARENT = 'PARENT', _('Parent')
 
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)

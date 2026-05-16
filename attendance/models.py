@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class Attendance(models.Model):
@@ -19,8 +20,8 @@ class Attendance(models.Model):
     ABSENT = 'absent'
     
     STATUS_CHOICES = [
-        (PRESENT, 'Present'),
-        (ABSENT, 'Absent'),
+        (PRESENT, _('Present')),
+        (ABSENT, _('Absent')),
     ]
     
     # Source choices
@@ -28,8 +29,8 @@ class Attendance(models.Model):
     FACE_RECOGNITION = 'face_recognition'
     
     SOURCE_CHOICES = [
-        (MANUAL, 'Manual'),
-        (FACE_RECOGNITION, 'FaceRecognition'),
+        (MANUAL, _('Manual')),
+        (FACE_RECOGNITION, _('Face Recognition')),
     ]
     
     # Relationship to Student
@@ -114,12 +115,13 @@ class Attendance(models.Model):
     def clean(self):
         """Validate the attendance record"""
         super().clean()
+        from smartSchool.messages import MSG_ATTENDANCE_DUPLICATE_MODEL
         
         # Check for duplicate attendance on the same date for the same student
         if self.pk is None:  # New record
             if Attendance.objects.filter(student=self.student, date=self.date).exists():
                 raise ValidationError(
-                    f'Attendance record already exists for {self.student.student_id} on {self.date}'
+                    str(MSG_ATTENDANCE_DUPLICATE_MODEL).format(student_id=self.student.student_id, date=self.date)
                 )
     
     def save(self, *args, **kwargs):
@@ -142,9 +144,9 @@ class AttendanceSession(models.Model):
     CANCELLED = 'cancelled'
     
     STATUS_CHOICES = [
-        (ACTIVE, 'Active'),
-        (COMPLETED, 'Completed'),
-        (CANCELLED, 'Cancelled'),
+        (ACTIVE, _('Active')),
+        (COMPLETED, _('Completed')),
+        (CANCELLED, _('Cancelled')),
     ]
     
     # Instructor who started the session

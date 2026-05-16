@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from smartSchool.messages import MSG_WEEK_PARAMS_BOTH_OR_NONE, MSG_WEEK_END_AFTER_START
 from .models import Report, WeeklyReport
 
 
@@ -76,8 +77,8 @@ class WeeklyReportGenerateSerializer(serializers.Serializer):
         we = attrs.get('week_end')
         if (ws is None) ^ (we is None):
             raise serializers.ValidationError(
-                'Provide both week_start and week_end, or neither for default previous week.'
+                str(MSG_WEEK_PARAMS_BOTH_OR_NONE)
             )
         if ws and we and we < ws:
-            raise serializers.ValidationError('week_end must be on or after week_start.')
+            raise serializers.ValidationError(str(MSG_WEEK_END_AFTER_START))
         return attrs

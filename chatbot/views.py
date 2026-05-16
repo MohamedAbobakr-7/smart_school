@@ -1,4 +1,6 @@
 import logging
+
+from smartSchool.messages import MSG_MESSAGE_REQUIRED, MSG_MESSAGE_TOO_LONG
 import re
 
 try:
@@ -995,9 +997,9 @@ class ChatbotAskView(APIView):
     def post(self, request):
         message = request.data.get('message', '').strip()
         if not message:
-            return Response({'error': 'Message is required.'}, status=400)
+            return Response({'error': str(MSG_MESSAGE_REQUIRED)}, status=400)
         if len(message) > 500:
-            return Response({'error': 'Message too long (max 500 characters).'}, status=400)
+            return Response({'error': str(MSG_MESSAGE_TOO_LONG).format(max=500)}, status=400)
 
         user = request.user
         role = getattr(user, 'role', 'USER')

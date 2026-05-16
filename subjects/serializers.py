@@ -8,7 +8,12 @@ class SubjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subject
-        fields = '__all__'
+        fields = [
+            'id', 'name', 'name_en', 'name_ar',
+            'code', 'description', 'description_en', 'description_ar',
+            'teachers_count', 'teacher_names',
+            'created_at', 'updated_at',
+        ]
 
     def get_teacher_names(self, obj):
         teachers = obj.teachers.all()
@@ -26,7 +31,9 @@ class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
         fields = [
-            'id', 'title', 'description', 'subject', 'subject_name',
+            'id', 'title', 'title_en', 'title_ar',
+            'description', 'description_en', 'description_ar',
+            'subject', 'subject_name',
             'uploaded_by', 'uploaded_by_name', 'file', 'file_url',
             'created_at', 'updated_at'
         ]

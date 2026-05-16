@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from smartSchool.messages import MSG_ATTENDANCE_DUPLICATE
 from .models import Attendance, AttendanceSession
 
 
@@ -38,7 +39,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
             
             if existing.exists():
                 raise serializers.ValidationError(
-                    f'Attendance record already exists for this student on {att_date}'
+                    str(MSG_ATTENDANCE_DUPLICATE).format(date=att_date)
                 )
         
         return data

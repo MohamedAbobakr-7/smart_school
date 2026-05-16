@@ -6,6 +6,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 
+from smartSchool.messages import (
+    MSG_ALL_STUDENTS_HAVE_IDS, MSG_STUDENT_ID_GENERATED,
+    MSG_INVALID_DATE_FORMAT, MSG_NO_IMAGE_PROVIDED,
+    MSG_INVALID_FILE_TYPE, MSG_PHOTO_SAVED_NO_ID,
+    MSG_FACE_REGISTERED_SUCCESS, MSG_FACE_REGISTRATION_FAILED,
+    MSG_PHOTO_SAVED_SERVICE_UNAVAILABLE, MSG_DASHBOARD_ERROR,
+)
 from users.permissions import IsAdmin, IsAdminOrTeacher
 from .models import Student
 from .serializers import StudentSerializer
@@ -80,7 +87,7 @@ class StudentViewSet(viewsets.ModelViewSet):
         if total_missing == 0:
             return Response({
                 'updated': 0,
-                'message': 'All students already have IDs. Nothing to update.',
+                'message': str(MSG_ALL_STUDENTS_HAVE_IDS),
                 'students': [],
             })
 
@@ -97,7 +104,7 @@ class StudentViewSet(viewsets.ModelViewSet):
 
         return Response({
             'updated': len(updated_students),
-            'message': f'Successfully generated IDs for {len(updated_students)} student(s).',
+            'message': str(MSG_STUDENT_ID_GENERATED).format(count=len(updated_students)),
             'students': updated_students,
         })
 
@@ -163,7 +170,7 @@ class StudentViewSet(viewsets.ModelViewSet):
                 week_end = date.fromisoformat(we_param)
             except ValueError:
                 return Response(
-                    {'detail': 'Invalid date format. Use YYYY-MM-DD.'},
+                    {'detail': str(MSG_INVALID_DATE_FORMAT)},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         else:
@@ -426,7 +433,7 @@ class StudentViewSet(viewsets.ModelViewSet):
         except Exception as exc:
             tb = traceback.format_exc()
             return Response(
-                {'detail': f'Dashboard error: {tb if dj_settings.DEBUG else str(exc)}'},
+                {'detail': str(MSG_DASHBOARD_ERROR).format(error=tb if dj_settings.DEBUG else str(exc))},
                 status=500,
             )
 
@@ -449,7 +456,7 @@ class StudentViewSet(viewsets.ModelViewSet):
 
         if not image_file:
             return Response(
-                {'error': 'No image file provided. Send the image as "photo" field.'},
+                {'error': str(MSG_NO_IMAGE_PROVIDED)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -457,7 +464,7 @@ class StudentViewSet(viewsets.ModelViewSet):
         content_type = image_file.content_type or ''
         if not content_type.startswith('image/'):
             return Response(
-                {'error': f'Invalid file type: {content_type}. Please upload a JPEG or PNG image.'},
+                {'error': str(MSG_INVALID_FILE_TYPE).format(content_type=content_type)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -473,10 +480,7 @@ class StudentViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     'success': True,
-                    'message': (
-                        'Photo saved. After the student has a Student ID, open Edit and save again '
-                        '(or re-upload the photo) to register the face for attendance.'
-                    ),
+                    'message': str(MSG_PHOTO_SAVED_NO_ID),
                     'photo_saved': True,
                     'face_registered': False,
                     'student_id': None,
@@ -498,7 +502,7 @@ class StudentViewSet(viewsets.ModelViewSet):
                 student.save(update_fields=['face_registered'])
                 return Response({
                     'success': True,
-                    'message': result.get('message', 'Face registered successfully.'),
+                    'message': result.get('message', str(MSG_FACE_REGISTERED_SUCCESS)),
                     'student_id': student.student_id,
                     'photo_url': request.build_absolute_uri(student.photo.url),
                     'face_registered': True,
@@ -509,7 +513,7 @@ class StudentViewSet(viewsets.ModelViewSet):
                 logger.warning(f'Face registration failed for student {sid}: {error_msg}')
                 return Response({
                     'success': False,
-                    'message': result.get('message', 'Face registration failed.'),
+                    'message': result.get('message', str(MSG_FACE_REGISTRATION_FAILED)),
                     'error': error_msg,
                     'photo_saved': True,
                     'face_registered': False,
@@ -521,10 +525,7 @@ class StudentViewSet(viewsets.ModelViewSet):
             # Photo is saved; face service is offline / raised
             return Response({
                 'success': False,
-                'message': (
-                    'Photo saved but face recognition service is unavailable. '
-                    'Start the service and retry.'
-                ),
+                'message': str(MSG_PHOTO_SAVED_SERVICE_UNAVAILABLE),
                 'error': str(exc),
                 'photo_saved': True,
                 'face_registered': False,
