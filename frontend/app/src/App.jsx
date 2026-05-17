@@ -36,6 +36,7 @@ import { TeacherSubjectsPage } from './pages/teacher/TeacherSubjectsPage'
 import { TeacherVideosPage } from './pages/teacher/TeacherVideosPage'
 import { TeacherMaterialsPage } from './pages/teacher/TeacherMaterialsPage'
 import { TeacherWeeklyReportsPage } from './pages/teacher/TeacherWeeklyReportsPage'
+import { SessionHistoryPage } from './pages/attendance/SessionHistoryPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 import { getFeatureModule } from './config/featureModules'
 
@@ -92,6 +93,9 @@ export default function App() {
             if (path === 'subjects') {
               return <Route key={path} path={path} element={<AdminSubjectsPage />} />
             }
+            if (path === 'attendance') {
+              return <Route key={path} path={path} element={<SessionHistoryPage title="Attendance History" />} />
+            }
             if (path === 'exams') {
               return <Route key={path} path={path} element={<AdminExamsPage />} />
             }
@@ -125,6 +129,7 @@ export default function App() {
               />
             )
           })}
+          <Route path="attendance/:sessionId" element={<SessionHistoryPage title="Attendance History" />} />
         </Route>
 
         <Route
@@ -179,6 +184,8 @@ export default function App() {
               />
             )
           })}
+          <Route path="attendance/session-history" element={<SessionHistoryPage />} />
+          <Route path="attendance/session-history/:sessionId" element={<SessionHistoryPage />} />
         </Route>
 
         <Route

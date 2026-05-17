@@ -11,11 +11,10 @@ export const FEATURE_MODULES = {
     parents: { title: 'Parents', endpoint: '/parents/', hints: ['GET/POST /api/parents/'] },
     subjects: { title: 'Subjects', endpoint: '/subjects/', hints: ['GET/POST /api/subjects/'] },
     attendance: {
-      title: 'Attendance',
-      endpoint: '/attendance/',
-      hints: ['GET /api/attendance/', 'GET /api/attendance-sessions/'],
-      enableCameraScan: true,
-      actions: [{ label: 'Load Sessions', endpoint: '/attendance-sessions/' }],
+      title: 'Attendance History',
+      endpoint: '/attendance-sessions/',
+      hints: ['GET /api/attendance-sessions/', 'GET /api/attendance-sessions/class-history/'],
+      actions: [{ label: 'Load Attendance Records', endpoint: '/attendance/' }],
     },
     exams: { title: 'Assessments & Grades', endpoint: '/exams/', hints: ['GET /api/exams/', 'GET /api/grades/'] },
     'weekly-reports': {

@@ -58,7 +58,7 @@ export function DashboardLayout() {
         const res = await apiFetch('/notifications/?unread=true')
         if (res.ok) {
           const json = await res.json()
-          const count = Array.isArray(json) ? json.length : (json.results ? json.results.length : 0)
+          const count = Array.isArray(json) ? json.length : (json.count ?? (json.results ? json.results.length : 0))
           if (!disposed) setUnreadCount(count)
         }
       } catch (e) {

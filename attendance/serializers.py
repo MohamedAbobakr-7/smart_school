@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from smartSchool.messages import MSG_ATTENDANCE_DUPLICATE
 from .models import Attendance, AttendanceSession
+from students.models import Student
 
 
 class AttendanceSerializer(serializers.ModelSerializer):
@@ -92,3 +93,27 @@ class AttendanceSessionSerializer(serializers.ModelSerializer):
             'total_faces_detected', 'total_matches',
             'total_attendance_marked', 'started_at', 'completed_at', 'updated_at'
         ]
+
+
+class SessionStudentStatusSerializer(serializers.Serializer):
+    """Serializer for a single student's attendance status within a session."""
+    student_db_id = serializers.IntegerField()
+    student_id = serializers.CharField()
+    student_name = serializers.CharField()
+    attendance_id = serializers.IntegerField(allow_null=True)
+    status = serializers.CharField()  # 'present', 'absent', or 'not_marked'
+    status_display = serializers.CharField()
+    source = serializers.CharField(allow_null=True)
+    source_display = serializers.CharField(allow_null=True)
+    notes = serializers.CharField(allow_null=True)
+    marked_at = serializers.DateTimeField(allow_null=True)
+
+
+class SessionHistorySerializer(serializers.Serializer):
+    """Serializer for the full session history view with all class students."""
+    session = AttendanceSessionSerializer()
+    total_class_students = serializers.IntegerField()
+    present_count = serializers.IntegerField()
+    absent_count = serializers.IntegerField()
+    not_marked_count = serializers.IntegerField()
+    students = SessionStudentStatusSerializer(many=True)

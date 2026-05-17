@@ -13,7 +13,7 @@ from smartSchool.messages import (
     MSG_SESSION_COMPLETED, MSG_SESSION_CANCELLED,
     MSG_STUDENT_CLASS_MISMATCH,
 )
-from users.permissions import IsAdmin, IsAdminOrTeacher, IsStudent, IsParent
+from users.permissions import IsAdmin, IsAdminOrTeacher, IsTeacher, IsStudent, IsParent
 from .models import Attendance, AttendanceSession
 from .serializers import AttendanceSerializer, AttendanceSessionSerializer
 from .face_recognition_client import get_face_recognition_client
@@ -26,7 +26,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Attendance management.
     - List/Retrieve: ADMIN, TEACHER (all), PARENT (own children), STUDENT (own)
-    - Create/Update/Delete: ADMIN, TEACHER only
+    - Create/Update/Delete: TEACHER only (admin can only view attendance records)
     """
     queryset = Attendance.objects.all()
     serializer_class = AttendanceSerializer
@@ -34,8 +34,8 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Override permissions based on action"""
-        if self.action in ['create', 'destroy', 'update', 'partial_update']:
-            return [IsAdminOrTeacher()]
+        if self.action in ['create', 'destroy', 'update', 'partial_update', 'process_classroom_image']:
+            return [IsTeacher()]
         elif self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
@@ -77,7 +77,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['post'],
-        permission_classes=[IsAdminOrTeacher],
+        permission_classes=[IsTeacher],
         parser_classes=[MultiPartParser, FormParser],
         url_path='process-classroom-image',
         url_name='process-classroom-image'
@@ -93,7 +93,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
           - image: Image file from classroom camera
         """
         user = request.user
-        if not (user.is_admin() or user.is_teacher()):
+        if not user.is_teacher():
             return Response(
                 {'success': False, 'message': str(MSG_INSTRUCTOR_ONLY), 'error': 'permission_denied'},
                 status=status.HTTP_403_FORBIDDEN
@@ -123,7 +123,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Teachers can only process their own sessions; admins can process any
+        # Teachers can only process their own sessions
         if user.is_teacher():
             teacher = getattr(user, 'teacher_profile', None)
             if session.instructor and teacher and session.instructor != teacher:
@@ -275,11 +275,24 @@ def _build_roster(session):
 class AttendanceSessionViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Attendance Session management.
-    Only instructors/admins can create and manage sessions.
+    - Teachers: can create, complete, cancel sessions and manage attendance.
+    - Admins: can only view/list sessions and session history (read-only).
     """
     queryset = AttendanceSession.objects.all()
     serializer_class = AttendanceSessionSerializer
     permission_classes = [IsAdminOrTeacher]
+
+    def get_permissions(self):
+        """Override permissions based on action.
+        Write operations (create, update, destroy, complete, cancel) are teacher-only.
+        Read operations (list, retrieve, active, roster, history) allow admin + teacher.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy',
+                           'complete_session', 'cancel_session']:
+            return [IsTeacher()]
+        # All other actions (list, retrieve, active_session, roster,
+        # session_history, class_session_history) → admin + teacher
+        return [IsAdminOrTeacher()]
     
     def get_queryset(self):
         user = self.request.user
@@ -418,3 +431,226 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
             )
         session.cancel()
         return Response({'success': True, 'message': str(MSG_SESSION_CANCELLED), 'session': self.get_serializer(session).data})
+
+    @action(detail=True, methods=['get'], url_path='history', url_name='session-history')
+    def session_history(self, request, pk=None):
+        """
+        GET /api/attendance-sessions/{id}/history/
+
+        Returns a comprehensive view of all students in the session's class,
+        showing who was marked present, absent, or not yet marked.
+
+        This is different from the roster endpoint which only returns students
+        that have attendance records. The history endpoint includes ALL students
+        enrolled in the class, even those without any attendance record.
+        """
+        session = self.get_object()
+        school_class = session.school_class
+
+        if not school_class:
+            return Response(
+                {
+                    'success': False,
+                    'message': 'This session is not linked to a class. Cannot show student history.',
+                    'error': 'no_class_linked',
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # All students enrolled in the class
+        all_students = list(
+            school_class.students.select_related('user', 'parent__user').all()
+        )
+
+        # Attendance records for this session
+        attendance_records = {
+            att.student_id: att
+            for att in session.attendances.select_related('student__user').all()
+        }
+
+        students_data = []
+        present_count = 0
+        absent_count = 0
+        not_marked_count = 0
+
+        for student in all_students:
+            att = attendance_records.get(student.id)
+
+            if att:
+                if att.status == Attendance.PRESENT:
+                    present_count += 1
+                    student_status = Attendance.PRESENT
+                    status_display = 'Present'
+                else:
+                    absent_count += 1
+                    student_status = Attendance.ABSENT
+                    status_display = 'Absent'
+                students_data.append({
+                    'student_db_id': student.id,
+                    'student_id': student.student_id or '',
+                    'student_name': student.user.get_full_name() or student.student_id or '',
+                    'attendance_id': att.id,
+                    'status': student_status,
+                    'status_display': status_display,
+                    'source': att.source,
+                    'source_display': att.get_source_display(),
+                    'notes': att.notes,
+                    'marked_at': att.updated_at,
+                })
+            else:
+                not_marked_count += 1
+                students_data.append({
+                    'student_db_id': student.id,
+                    'student_id': student.student_id or '',
+                    'student_name': student.user.get_full_name() or student.student_id or '',
+                    'attendance_id': None,
+                    'status': 'not_marked',
+                    'status_display': 'Not Marked',
+                    'source': None,
+                    'source_display': None,
+                    'notes': None,
+                    'marked_at': None,
+                })
+
+        result = {
+            'session': AttendanceSessionSerializer(session).data,
+            'total_class_students': len(all_students),
+            'present_count': present_count,
+            'absent_count': absent_count,
+            'not_marked_count': not_marked_count,
+            'students': students_data,
+        }
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='class-history', url_name='class-session-history')
+    def class_session_history(self, request):
+        """
+        GET /api/attendance-sessions/class-history/?school_class=<class_id>&status=completed
+
+        Returns sessions for a given class, each with the full student attendance
+        breakdown (present, absent, not_marked).
+
+        Query params:
+          - school_class (required): class ID
+          - status (optional): filter by session status (active, completed, cancelled).
+            Defaults to showing completed + cancelled sessions.
+            Pass "all" to include every status.
+
+        Useful for viewing historical attendance records for a class over time.
+        """
+        school_class_id = request.query_params.get('school_class')
+
+        if not school_class_id:
+            return Response(
+                {
+                    'success': False,
+                    'message': 'school_class query parameter is required.',
+                    'error': 'missing_school_class',
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify the class exists
+        from classes.models import SchoolClass
+        try:
+            school_class = SchoolClass.objects.get(pk=school_class_id)
+        except SchoolClass.DoesNotExist:
+            return Response(
+                {
+                    'success': False,
+                    'message': f'Class with id {school_class_id} does not exist.',
+                    'error': 'class_not_found',
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Status filter
+        status_filter = request.query_params.get('status', '')
+        if status_filter == 'all':
+            sessions_qs = self.get_queryset().filter(
+                school_class_id=school_class_id,
+            ).order_by('-date', '-started_at')
+        elif status_filter in [AttendanceSession.ACTIVE, AttendanceSession.COMPLETED, AttendanceSession.CANCELLED]:
+            sessions_qs = self.get_queryset().filter(
+                school_class_id=school_class_id,
+                status=status_filter,
+            ).order_by('-date', '-started_at')
+        else:
+            # Default: completed + cancelled
+            sessions_qs = self.get_queryset().filter(
+                school_class_id=school_class_id,
+                status__in=[AttendanceSession.COMPLETED, AttendanceSession.CANCELLED],
+            ).order_by('-date', '-completed_at')
+
+        # All students in the class (single query, reused for every session)
+        all_students = list(
+            school_class.students.select_related('user', 'parent__user').all()
+        )
+
+        results = []
+        for session in sessions_qs:
+            attendance_records = {
+                att.student_id: att
+                for att in session.attendances.select_related('student__user').all()
+            }
+
+            students_data = []
+            present_count = 0
+            absent_count = 0
+            not_marked_count = 0
+
+            for student in all_students:
+                att = attendance_records.get(student.id)
+
+                if att:
+                    if att.status == Attendance.PRESENT:
+                        present_count += 1
+                        student_status = Attendance.PRESENT
+                        status_display = 'Present'
+                    else:
+                        absent_count += 1
+                        student_status = Attendance.ABSENT
+                        status_display = 'Absent'
+                    students_data.append({
+                        'student_db_id': student.id,
+                        'student_id': student.student_id or '',
+                        'student_name': student.user.get_full_name() or student.student_id or '',
+                        'attendance_id': att.id,
+                        'status': student_status,
+                        'status_display': status_display,
+                        'source': att.source,
+                        'source_display': att.get_source_display(),
+                        'notes': att.notes,
+                        'marked_at': att.updated_at,
+                    })
+                else:
+                    not_marked_count += 1
+                    students_data.append({
+                        'student_db_id': student.id,
+                        'student_id': student.student_id or '',
+                        'student_name': student.user.get_full_name() or student.student_id or '',
+                        'attendance_id': None,
+                        'status': 'not_marked',
+                        'status_display': 'Not Marked',
+                        'source': None,
+                        'source_display': None,
+                        'notes': None,
+                        'marked_at': None,
+                    })
+
+            results.append({
+                'session': AttendanceSessionSerializer(session).data,
+                'total_class_students': len(all_students),
+                'present_count': present_count,
+                'absent_count': absent_count,
+                'not_marked_count': not_marked_count,
+                'students': students_data,
+            })
+
+        return Response({
+            'school_class_id': int(school_class_id),
+            'school_class_name': school_class.display_name or school_class.name,
+            'total_sessions': len(results),
+            'sessions': results,
+        }, status=status.HTTP_200_OK)

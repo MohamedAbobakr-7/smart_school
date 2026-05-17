@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { AttendanceCameraCapture } from '../components/attendance/AttendanceCameraCapture'
 import { Card } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
 import { apiFetch } from '../lib/api'
+import { useAuthStore } from '../stores/authStore'
 
 function truncate(value, size = 180) {
   if (typeof value !== 'string') return value
@@ -36,6 +38,7 @@ export function FeatureModulePage({
   actions = [],
   enableCameraScan = false,
 }) {
+  const navigate = useNavigate()
   const attendanceEndpoint = '/attendance-sessions/'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -105,11 +108,13 @@ export function FeatureModulePage({
 
   async function loadAttendanceFilters() {
     if (!enableCameraScan) return
+    const user = useAuthStore.getState().user
+    const isTeacher = user?.role === 'TEACHER'
     try {
       const [subjectsRes, studentsRes, classesRes] = await Promise.all([
-        apiFetch('/subjects/'),
+        apiFetch(isTeacher ? '/subjects/?my_subjects=true' : '/subjects/'),
         apiFetch('/students/'),
-        apiFetch('/classes/'),
+        apiFetch(isTeacher ? '/classes/?my_classes=true' : '/classes/'),
       ])
       if (subjectsRes.ok) {
         const s = normalizeItems(await subjectsRes.json().catch(() => []))
@@ -609,6 +614,7 @@ export function FeatureModulePage({
                     <th>Date</th>
                     <th>Status</th>
                     <th>Marked</th>
+                    <th>History</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -626,12 +632,20 @@ export function FeatureModulePage({
                             </span>
                           </td>
                           <td>{session.total_attendance_marked ?? 0}</td>
+                          <td>
+                            <button
+                              className="btn btn-ghost btn-xs"
+                              onClick={() => navigate(`session-history/${session.id}`)}
+                            >
+                              📋 View
+                            </button>
+                          </td>
                         </tr>
                       )
                     })
                   ) : (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '1.5rem 0' }}>No sessions yet.</td>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '1.5rem 0' }}>No sessions yet.</td>
                     </tr>
                   )}
                 </tbody>

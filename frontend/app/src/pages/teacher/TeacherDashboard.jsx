@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DashboardCharts } from '../../components/dashboard/DashboardCharts'
 import { RecentActivity } from '../../components/dashboard/RecentActivity'
 import { StatCard } from '../../components/dashboard/StatCard'
@@ -45,8 +46,9 @@ const STAT_DEFS = [
 
 function resolveStats(data) {
   if (!data) return STAT_DEFS.map((d) => ({ ...d, value: '—', hint: '' }))
+  const classNames = (data.my_classes_list || []).map((c) => c.name).join(', ')
   return [
-    { ...STAT_DEFS[0], value: String(data.my_classes),       hint: 'Assigned classes' },
+    { ...STAT_DEFS[0], value: String(data.my_classes), hint: classNames || 'Assigned classes' },
     { ...STAT_DEFS[1], value: String(data.students_taught),  hint: 'Across your classes' },
     { ...STAT_DEFS[2], value: String(data.sessions_this_week), hint: 'Attendance sessions' },
     {
@@ -60,6 +62,7 @@ function resolveStats(data) {
 }
 
 export function TeacherDashboard() {
+  const navigate = useNavigate()
   const [data,    setData]    = useState(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
@@ -121,15 +124,35 @@ export function TeacherDashboard() {
         {/* ── Stat Cards ── */}
         <section className="dash-stats-grid" aria-label="Key metrics">
           {stats.map((s) => (
-            <StatCard
-              key={s.key}
-              icon={s.icon}
-              label={s.label}
-              value={s.value}
-              hint={s.hint}
-              tone={s.tone}
-              loading={loading}
-            />
+            s.key === 'classes' ? (
+              <div
+                key={s.key}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate('/teacher/students')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/teacher/students') }}
+              >
+                <StatCard
+                  icon={s.icon}
+                  label={s.label}
+                  value={s.value}
+                  hint={s.hint}
+                  tone={s.tone}
+                  loading={loading}
+                />
+              </div>
+            ) : (
+              <StatCard
+                key={s.key}
+                icon={s.icon}
+                label={s.label}
+                value={s.value}
+                hint={s.hint}
+                tone={s.tone}
+                loading={loading}
+              />
+            )
           ))}
         </section>
 

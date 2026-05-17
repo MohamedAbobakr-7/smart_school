@@ -37,8 +37,12 @@ def create_notification(
     *,
     recipient,
     notification_type: str,
-    title: str,
-    body: str,
+    title: str = "",
+    body: str = "",
+    title_en: str = "",
+    title_ar: str = "",
+    body_en: str = "",
+    body_ar: str = "",
     metadata: dict[str, Any] | None = None,
     dedupe_key: str = "",
     broadcast: bool = True,
@@ -49,11 +53,19 @@ def create_notification(
         return None
 
     meta = metadata or {}
+    # Use explicit localized fields; fall back to title/body for both languages
+    t_en = title_en or title
+    t_ar = title_ar or title
+    b_en = body_en or body
+    b_ar = body_ar or body
+
     kwargs = {
         "recipient": recipient,
         "notification_type": notification_type,
-        "title": title[:200],
-        "body": body,
+        "title_en": t_en[:200],
+        "title_ar": t_ar[:200],
+        "body_en": b_en,
+        "body_ar": b_ar,
         "metadata": meta,
     }
     if dedupe_key:

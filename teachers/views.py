@@ -139,17 +139,17 @@ class TeacherViewSet(viewsets.ModelViewSet):
             from exams.models import Exam, Grade
 
             # ── 1. My Classes ──────────────────────────────────────────────
-            # Derive from the actual data that links a teacher to classes:
-            #   a) AttendanceSession.school_class  (set when sessions are started)
-            #   b) Exam.class_id                   (set when exams are created)
-            # Both the assigned_classes M2M and subject_class_relations junction
-            # table are often empty — the real assignment trail lives here.
+            # Use the assigned_classes M2M as the authoritative source for
+            # current class assignments.  Historical sessions/exams may still
+            # reference classes that have been removed from the teacher, but
+            # the "My Classes" card should only show currently assigned ones.
 
-            all_class_pks, all_string_class_ids = teacher_class_visibility_sets(teacher)
-
-            # my_classes = unique FK classes + unique string-only classes not in FK set
-            # (string ids that aren't FK refs we can't deduplicate, so just count them)
-            my_classes = len(all_class_pks) + len(all_string_class_ids)
+            assigned_qs = teacher.assigned_classes.all().order_by('name')
+            my_classes = assigned_qs.count()
+            my_classes_list = [
+                {'id': c.id, 'name': c.display_name or c.name}
+                for c in assigned_qs
+            ]
 
             # ── 2. Students Taught ─────────────────────────────────────────
             students_taught = teacher_visible_students_queryset(teacher).count()
@@ -248,6 +248,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
             return Response({
                 'my_classes': my_classes,
+                'my_classes_list': my_classes_list,
                 'students_taught': students_taught,
                 'sessions_this_week': sessions_this_week,
                 'avg_score': avg_score,

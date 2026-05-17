@@ -11,7 +11,7 @@ export const NAV_BY_ROLE = {
     { to: '/admin/parents', label: 'Parents' },
     { to: '/admin/subjects', label: 'Subjects' },
     { to: '/admin/classes', label: 'Classes' },
-    { to: '/admin/attendance', label: 'Attendance' },
+    { to: '/admin/attendance', label: 'Attendance History' },
     { to: '/admin/exams', label: 'Assessments & Grades' },
     { to: '/admin/weekly-reports', label: 'Weekly reports' },
     { to: '/admin/notifications', label: 'Notifications' },
