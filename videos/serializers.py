@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from subjects.serializers import SubjectSerializer
 from teachers.models import Teacher
+from classes.models import SchoolClass
 
 from .models import Video, VideoProgress
 
@@ -14,6 +15,12 @@ class VideoSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    target_classes = serializers.PrimaryKeyRelatedField(
+        queryset=SchoolClass.objects.all(),
+        many=True,
+        required=True,
+    )
+    target_classes_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Video
@@ -25,6 +32,8 @@ class VideoSerializer(serializers.ModelSerializer):
             "subject_detail",
             "category",
             "uploaded_by",
+            "target_classes",
+            "target_classes_display",
             "video_file",
             "duration_seconds",
             "is_published",
@@ -42,10 +51,75 @@ class VideoSerializer(serializers.ModelSerializer):
         path = f"/api/videos/{obj.pk}/stream/"
         return request.build_absolute_uri(path) + "?access=<JWT>"
 
+    def get_target_classes_display(self, obj):
+        return [
+            {"id": c.id, "name": c.display_name}
+            for c in obj.target_classes.all()
+        ]
+
     def validate(self, attrs):
         request = self.context.get("request")
-        if request and request.user.is_teacher():
+        if not request:
+            return attrs
+
+        user = request.user
+
+        if user.is_teacher() and hasattr(user, "teacher_profile"):
+            teacher = user.teacher_profile
             attrs.pop("uploaded_by", None)
+
+            # Validate subject
+            subject = attrs.get("subject")
+            if subject and not teacher.assigned_subjects.filter(id=subject.id).exists():
+                raise serializers.ValidationError(
+                    {"subject": "You can only upload videos for subjects assigned to you."}
+                )
+
+            # Validate target classes
+            target_classes = attrs.get("target_classes")
+            if target_classes is None and self.instance is None:
+                raise serializers.ValidationError(
+                    {"target_classes": "You must select at least one target class."}
+                )
+            if target_classes is not None:
+                if not target_classes:
+                    raise serializers.ValidationError(
+                        {"target_classes": "You must select at least one target class."}
+                    )
+                for school_class in target_classes:
+                    if not teacher.assigned_classes.filter(id=school_class.id).exists():
+                        raise serializers.ValidationError(
+                            {"target_classes": f"Class '{school_class.display_name}' is not assigned to you."}
+                        )
+
+        elif user.is_admin():
+            uploaded_by = attrs.get("uploaded_by")
+            if not uploaded_by:
+                uploaded_by = getattr(self.instance, 'uploaded_by', None)
+
+            if uploaded_by:
+                subject = attrs.get("subject")
+                if subject and not uploaded_by.assigned_subjects.filter(id=subject.id).exists():
+                    raise serializers.ValidationError(
+                        {"subject": f"Subject is not assigned to teacher {uploaded_by.teacher_id}."}
+                    )
+                target_classes = attrs.get("target_classes")
+                if target_classes is not None:
+                    if not target_classes:
+                        raise serializers.ValidationError(
+                            {"target_classes": "You must select at least one target class."}
+                        )
+                    for school_class in target_classes:
+                        if not uploaded_by.assigned_classes.filter(id=school_class.id).exists():
+                            raise serializers.ValidationError(
+                                {"target_classes": f"Class '{school_class.display_name}' is not assigned to teacher {uploaded_by.teacher_id}."}
+                            )
+            else:
+                if self.instance is None and not attrs.get("uploaded_by"):
+                    raise serializers.ValidationError(
+                        {"uploaded_by": "Administrators must set uploaded_by (teacher id)."}
+                    )
+
         return attrs
 
     def create(self, validated_data):
@@ -70,6 +144,8 @@ class VideoListSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     uploaded_by_name = serializers.SerializerMethodField()
     stream_url_template = serializers.SerializerMethodField(read_only=True)
+    target_classes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    target_classes_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Video
@@ -83,6 +159,8 @@ class VideoListSerializer(serializers.ModelSerializer):
             "category",
             "uploaded_by",
             "uploaded_by_name",
+            "target_classes",
+            "target_classes_display",
             "duration_seconds",
             "is_published",
             "display_order",
@@ -93,6 +171,12 @@ class VideoListSerializer(serializers.ModelSerializer):
     def get_uploaded_by_name(self, obj):
         u = obj.uploaded_by.user
         return u.get_full_name() or u.username
+
+    def get_target_classes_display(self, obj):
+        return [
+            {"id": c.id, "name": c.display_name}
+            for c in obj.target_classes.all()
+        ]
 
     def get_stream_url_template(self, obj):
         request = self.context.get("request")

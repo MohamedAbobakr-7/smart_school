@@ -34,7 +34,6 @@ function studentStatusBadge(status) {
   const map = {
     present: { label: 'Present', bg: '#dcfce7', color: '#166534', icon: '✓' },
     absent: { label: 'Absent', bg: '#fee2e2', color: '#991b1b', icon: '✗' },
-    not_marked: { label: 'Not Marked', bg: '#fef9c3', color: '#854d0e', icon: '?' },
   }
   const s = map[status] || { label: status, bg: '#f3f4f6', color: '#374151', icon: '' }
   return (
@@ -64,7 +63,6 @@ function SessionDetail({ sessionData, onBack }) {
 
   const presentStudents = students.filter((s) => s.status === 'present')
   const absentStudents = students.filter((s) => s.status === 'absent')
-  const notMarkedStudents = students.filter((s) => s.status === 'not_marked')
 
   return (
     <div>
@@ -98,7 +96,7 @@ function SessionDetail({ sessionData, onBack }) {
         </div>
 
         {/* Counts row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
           <div
             style={{
               background: '#dcfce7',
@@ -124,19 +122,6 @@ function SessionDetail({ sessionData, onBack }) {
               {sessionData.absent_count}
             </p>
             <p style={{ margin: 0, fontSize: '0.85rem', color: '#991b1b' }}>Absent</p>
-          </div>
-          <div
-            style={{
-              background: '#fef9c3',
-              borderRadius: '0.5rem',
-              padding: '0.75rem 1rem',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#854d0e' }}>
-              {sessionData.not_marked_count}
-            </p>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#854d0e' }}>Not Marked</p>
           </div>
         </div>
       </Card>
@@ -205,31 +190,6 @@ function SessionDetail({ sessionData, onBack }) {
         )}
       </Card>
 
-      {/* Not marked students */}
-      {notMarkedStudents.length > 0 && (
-        <Card title={`Not Marked (${notMarkedStudents.length})`} style={{ marginTop: '1.5rem' }}>
-          <div className="feature-table-wrap">
-            <table className="feature-table">
-              <thead>
-                <tr>
-                  <th>Student ID</th>
-                  <th>Name</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notMarkedStudents.map((s) => (
-                  <tr key={s.student_db_id}>
-                    <td>{s.student_id || '—'}</td>
-                    <td style={{ fontWeight: 500 }}>{s.student_name || '—'}</td>
-                    <td>{studentStatusBadge(s.status)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
     </div>
   )
 }
@@ -352,7 +312,7 @@ export function SessionHistoryPage({ title = 'Session History' }) {
     <>
       <PageHeader
         title={title}
-        subtitle="View all students in a class — who was present, absent, or not marked for each session."
+        subtitle="View all students in a class — who was present or absent for each session."
       />
 
       {/* Class selector + status filter */}
@@ -425,7 +385,6 @@ export function SessionHistoryPage({ title = 'Session History' }) {
                     <th>Status</th>
                     <th>Present</th>
                     <th>Absent</th>
-                    <th>Not Marked</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -440,7 +399,6 @@ export function SessionHistoryPage({ title = 'Session History' }) {
                         <td>{statusChip(s.status)}</td>
                         <td style={{ fontWeight: 600, color: '#166534' }}>{entry.present_count}</td>
                         <td style={{ fontWeight: 600, color: '#991b1b' }}>{entry.absent_count}</td>
-                        <td style={{ fontWeight: 600, color: '#854d0e' }}>{entry.not_marked_count}</td>
                         <td>
                           <button
                             className="btn btn-primary btn-xs"                            onClick={() => navigate(String(s.id))}

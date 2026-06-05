@@ -1,14 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Card } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
-import { apiFetch } from '../lib/api'
+import { useNotificationStore } from '../stores/notificationStore'
 import { useLangStore } from '../stores/langStore'
-
-function parseList(payload) {
-  if (Array.isArray(payload)) return payload
-  if (payload?.results && Array.isArray(payload.results)) return payload.results
-  return []
-}
 
 /** Pick the best localized value for a field, with fallback chain. */
 function localizedField(obj, field, lang) {
@@ -27,56 +21,17 @@ function formatDate(val) {
 
 export function NotificationsPage() {
   const lang = useLangStore((s) => s.lang)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [notifications, setNotifications] = useState([])
-
-  async function loadNotifications() {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await apiFetch('/notifications/')
-      const json = await res.json().catch(() => [])
-      if (!res.ok) throw new Error(json.detail || 'Failed to load notifications')
-      setNotifications(parseList(json))
-    } catch (err) {
-      setError(err.message || 'Failed to load notifications')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const notifications = useNotificationStore((s) => s.notifications)
+  const loading = useNotificationStore((s) => s.loading)
+  const error = useNotificationStore((s) => s.error)
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications)
+  const markRead = useNotificationStore((s) => s.markRead)
+  const markAllRead = useNotificationStore((s) => s.markAllRead)
 
   useEffect(() => {
-    loadNotifications()
-  }, [])
-
-  async function markRead(id) {
-    try {
-      const res = await apiFetch(`/notifications/${id}/mark-read/`, { method: 'POST' })
-      if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
-        )
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  async function markAllRead() {
-    try {
-      const res = await apiFetch(`/notifications/mark-all-read/`, { method: 'POST' })
-      if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (!n.read_at ? { ...n, read_at: new Date().toISOString() } : n))
-        )
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  const unreadCount = notifications.filter((n) => !n.read_at).length
+    fetchNotifications()
+  }, [fetchNotifications])
 
   return (
     <>

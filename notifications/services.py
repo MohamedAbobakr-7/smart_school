@@ -30,6 +30,8 @@ def is_allowed(user, notification_type: str) -> bool:
         return prefs.allow_student_report
     if notification_type == Notification.Type.NEW_WEEKLY_REPORT:
         return prefs.allow_weekly_report
+    if notification_type == Notification.Type.EXAM_REMINDER:
+        return prefs.allow_exam_reminder
     return True
 
 
@@ -62,8 +64,10 @@ def create_notification(
     kwargs = {
         "recipient": recipient,
         "notification_type": notification_type,
+        "title": t_en[:200],          # base field (required by DB); use English as default
         "title_en": t_en[:200],
         "title_ar": t_ar[:200],
+        "body": b_en,                 # base field (required by DB); use English as default
         "body_en": b_en,
         "body_ar": b_ar,
         "metadata": meta,

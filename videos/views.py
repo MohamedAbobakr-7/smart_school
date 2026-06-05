@@ -60,18 +60,34 @@ class VideoViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         subject = self.request.query_params.get("subject")
         category = self.request.query_params.get("category")
+        school_class = self.request.query_params.get("class") or self.request.query_params.get("school_class")
+
         if subject:
             qs = qs.filter(subject_id=subject)
         if category:
             qs = qs.filter(category=category)
+        if school_class:
+            qs = qs.filter(target_classes__id=school_class)
 
         if user.is_admin():
-            return qs
+            return qs.distinct()
+
         if user.is_teacher() and hasattr(user, "teacher_profile"):
             tp = user.teacher_profile
-            return qs.filter(Q(is_published=True) | Q(uploaded_by=tp))
-        if user.is_student():
-            return qs.filter(is_published=True)
+            return qs.filter(Q(is_published=True) | Q(uploaded_by=tp)).distinct()
+
+        if user.is_student() and hasattr(user, "student_profile"):
+            sp = user.student_profile
+            if sp.school_class:
+                return qs.filter(is_published=True, target_classes=sp.school_class).distinct()
+            return Video.objects.none()
+
+        if user.is_parent() and hasattr(user, "parent_profile"):
+            pp = user.parent_profile
+            from students.models import Student
+            child_class_ids = Student.objects.filter(parent=pp, school_class__isnull=False).values_list("school_class_id", flat=True)
+            return qs.filter(is_published=True, target_classes__id__in=list(child_class_ids)).distinct()
+
         return Video.objects.none()
 
     def perform_update(self, serializer):

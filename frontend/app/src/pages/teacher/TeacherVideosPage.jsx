@@ -20,7 +20,7 @@ const CATEGORIES = [
 ]
 
 export function TeacherVideosPage() {
-  const { teacher: teacherProfile, mySubjectIds } = useTeacherProfile()
+  const { teacher: teacherProfile, mySubjectIds, myClassObjects } = useTeacherProfile()
   const [allSubjects, setAllSubjects] = useState([])
   const [videos, setVideos] = useState([])
   const [msg, setMsg] = useState('')
@@ -29,14 +29,26 @@ export function TeacherVideosPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [subject, setSubject] = useState('')
+  const [selectedClasses, setSelectedClasses] = useState([])
   const [category, setCategory] = useState('lecture')
   const [isPublished, setIsPublished] = useState(true)
   const [file, setFile] = useState(null)
+
+  const [filterClass, setFilterClass] = useState('')
+  const [filterSubject, setFilterSubject] = useState('')
 
   const subjects = useMemo(() => {
     if (mySubjectIds.length === 0) return []
     return allSubjects.filter((s) => mySubjectIds.includes(Number(s.id)))
   }, [allSubjects, mySubjectIds])
+
+  const filteredVideos = useMemo(() => {
+    return videos.filter((v) => {
+      const matchSubject = !filterSubject || String(v.subject) === String(filterSubject)
+      const matchClass = !filterClass || (v.target_classes && v.target_classes.includes(Number(filterClass)))
+      return matchSubject && matchClass
+    })
+  }, [videos, filterSubject, filterClass])
 
   const loadLists = useCallback(async () => {
     const [sRes, vRes] = await Promise.all([apiFetchAll('/subjects/'), apiFetch('/videos/')])
@@ -55,6 +67,10 @@ export function TeacherVideosPage() {
       setMsg('Title and subject are required.')
       return
     }
+    if (selectedClasses.length === 0) {
+      setMsg('You must select at least one target class.')
+      return
+    }
     if (!file) {
       setMsg('Choose a video file (mp4, webm, mov, …).')
       return
@@ -65,6 +81,9 @@ export function TeacherVideosPage() {
       body.append('title', title.trim())
       body.append('description', description.trim())
       body.append('subject', String(subject))
+      selectedClasses.forEach((cId) => {
+        body.append('target_classes', String(cId))
+      })
       body.append('category', category)
       body.append('is_published', isPublished ? 'True' : 'False')
       body.append('display_order', '0')
@@ -79,6 +98,7 @@ export function TeacherVideosPage() {
       setMsg(`Uploaded: “${data.title}” (id ${data.id}).`)
       setTitle('')
       setDescription('')
+      setSelectedClasses([])
       setFile(null)
       await loadLists()
     } catch (err) {
@@ -137,6 +157,31 @@ export function TeacherVideosPage() {
               </option>
             ))}
           </select>
+          <label className="login-label">
+            Target Classes
+          </label>
+          <div className="teaching-check-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', margin: '0.5rem 0 1rem' }}>
+            {myClassObjects.map((c) => (
+              <label key={c.id} className="login-label flex-row teaching-check" style={{ cursor: 'pointer', margin: 0 }}>
+                <input
+                  type="checkbox"
+                  value={c.id}
+                  checked={selectedClasses.includes(c.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedClasses([...selectedClasses, c.id])
+                    } else {
+                      setSelectedClasses(selectedClasses.filter((id) => id !== c.id))
+                    }
+                  }}
+                />
+                {c.name}
+              </label>
+            ))}
+            {myClassObjects.length === 0 && (
+              <p className="muted" style={{ fontSize: '0.875rem' }}>No classes assigned to you.</p>
+            )}
+          </div>
           <label className="login-label" htmlFor="tv-cat">
             Category
           </label>
@@ -172,8 +217,50 @@ export function TeacherVideosPage() {
       </Card>
 
       <Card title="Your videos">
-        {videos.length === 0 ? (
-          <p className="muted">No videos yet.</p>
+        {videos.length > 0 && (
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', flex: 1 }}>
+              <label className="login-label" htmlFor="filter-subject" style={{ fontSize: '0.75rem', marginBottom: 0 }}>
+                Filter by Subject
+              </label>
+              <select
+                id="filter-subject"
+                className="login-input login-input--plain"
+                value={filterSubject}
+                onChange={(e) => setFilterSubject(e.target.value)}
+              >
+                <option value="">All Subjects</option>
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.code ? `${s.code} — ` : ''}
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', flex: 1 }}>
+              <label className="login-label" htmlFor="filter-class" style={{ fontSize: '0.75rem', marginBottom: 0 }}>
+                Filter by Class
+              </label>
+              <select
+                id="filter-class"
+                className="login-input login-input--plain"
+                value={filterClass}
+                onChange={(e) => setFilterClass(e.target.value)}
+              >
+                <option value="">All Classes</option>
+                {myClassObjects.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {filteredVideos.length === 0 ? (
+          <p className="muted">No videos found matching the filters.</p>
         ) : (
           <div className="teaching-table-wrap">
             <table className="feature-table teaching-table">
@@ -181,15 +268,21 @@ export function TeacherVideosPage() {
                 <tr>
                   <th>Title</th>
                   <th>Subject</th>
+                  <th>Target Classes</th>
                   <th>Category</th>
                   <th>Published</th>
                 </tr>
               </thead>
               <tbody>
-                {videos.slice(0, 30).map((v) => (
+                {filteredVideos.slice(0, 30).map((v) => (
                   <tr key={v.id}>
                     <td>{v.title}</td>
                     <td>{v.subject_name || v.subject_code || v.subject}</td>
+                    <td>
+                      {v.target_classes_display && v.target_classes_display.length > 0
+                        ? v.target_classes_display.map((c) => c.name).join(', ')
+                        : 'None'}
+                    </td>
                     <td>{v.category}</td>
                     <td>{v.is_published ? 'Yes' : 'No'}</td>
                   </tr>

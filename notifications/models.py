@@ -9,6 +9,7 @@ class Notification(models.Model):
     class Type(models.TextChoices):
         LOW_GRADE = "LOW_GRADE", _("Low Grade")
         ATTENDANCE = "ATTENDANCE", _("Attendance")
+        EXAM_REMINDER = "EXAM_REMINDER", _("Exam Reminder")
         NEW_STUDENT_REPORT = "NEW_STUDENT_REPORT", _("New Student Report")
         NEW_WEEKLY_REPORT = "NEW_WEEKLY_REPORT", _("New Weekly Report")
         SYSTEM = "SYSTEM", _("System")
@@ -46,6 +47,10 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.notification_type} → {self.recipient_id}"
 
+    @property
+    def is_read(self):
+        return self.read_at is not None
+
 
 class NotificationPreference(models.Model):
     """Per-user toggles for automated notification categories."""
@@ -59,6 +64,7 @@ class NotificationPreference(models.Model):
     allow_attendance = models.BooleanField(default=True)
     allow_student_report = models.BooleanField(default=True)
     allow_weekly_report = models.BooleanField(default=True)
+    allow_exam_reminder = models.BooleanField(default=True)
 
     updated_at = models.DateTimeField(auto_now=True)
 

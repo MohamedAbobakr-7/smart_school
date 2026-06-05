@@ -40,6 +40,11 @@ class Video(models.Model):
         on_delete=models.CASCADE,
         related_name="uploaded_videos",
     )
+    target_classes = models.ManyToManyField(
+        "classes.SchoolClass",
+        related_name="videos",
+        help_text="Target classes for this educational video.",
+    )
     video_file = models.FileField(
         upload_to=educational_video_upload_to,
         validators=[

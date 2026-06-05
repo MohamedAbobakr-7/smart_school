@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import { useNotificationStore } from '../../stores/notificationStore'
 import { navItemsForRole } from '../../config/navigation'
 import { Sidebar } from './Sidebar'
 import { apiFetch } from '../../lib/api'
@@ -20,12 +21,16 @@ export function DashboardLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   function handleLogout() {
+    disconnectWS()
     logout()
     navigate('/login', { replace: true })
   }
 
   const location = useLocation()
-  const [unreadCount, setUnreadCount] = useState(0)
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const connectWS = useNotificationStore((s) => s.connectWebSocket)
+  const disconnectWS = useNotificationStore((s) => s.disconnectWebSocket)
+  const fetchUnread = useNotificationStore((s) => s.fetchUnreadCount)
 
   // Fetch profile once on mount to ensure photo_url is available in the auth store
   useEffect(() => {
@@ -51,27 +56,25 @@ export function DashboardLayout() {
     return () => { disposed = true }
   }, [])
 
+  // Connect WebSocket once on mount; disconnect on unmount (logout navigates away)
   useEffect(() => {
-    let disposed = false
-    async function fetchUnread() {
-      try {
-        const res = await apiFetch('/notifications/?unread=true')
-        if (res.ok) {
-          const json = await res.json()
-          const count = Array.isArray(json) ? json.length : (json.count ?? (json.results ? json.results.length : 0))
-          if (!disposed) setUnreadCount(count)
-        }
-      } catch (e) {
-        // ignore
-      }
+    const { access } = useAuthStore.getState()
+    if (access) {
+      connectWS()
+      fetchUnread()
     }
-    fetchUnread()
-    const interval = setInterval(fetchUnread, 30000)
     return () => {
-      disposed = true
-      clearInterval(interval)
+      disconnectWS()
     }
-  }, [location.pathname]) // re-fetch when navigating to/from notifications
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refresh unread count when navigating (e.g. after visiting notifications page)
+  useEffect(() => {
+    const { access } = useAuthStore.getState()
+    if (access) {
+      fetchUnread()
+    }
+  }, [location.pathname, fetchUnread])
 
   const items = navItemsForRole(user?.role)
   const displayName =
