@@ -17,6 +17,7 @@ const EMPTY_EXAM = {
   subject: '',
   teacher: '',
   class_id: '',
+  total_grade: 100,
   duration: 60,
   exam_date: '',
 }
@@ -123,6 +124,7 @@ export function AdminExamsPage() {
       subject: exam.subject || '',
       teacher: exam.teacher || '',
       class_id: exam.class_id || '',
+      total_grade: exam.total_grade || 100,
       duration: exam.duration || 60,
       exam_date: exam.exam_date || '',
     })
@@ -153,6 +155,7 @@ export function AdminExamsPage() {
         subject: Number(examForm.subject),
         teacher: Number(examForm.teacher),
         class_id: examForm.class_id.trim(),
+        total_grade: Number(examForm.total_grade) || 100,
         duration: Number(examForm.duration) || 60,
         exam_date: examForm.exam_date || null,
       }
@@ -384,6 +387,19 @@ export function AdminExamsPage() {
                     />
                   </div>
                   <div className="exam-form-col">
+                    <label className="login-label" htmlFor="exam-total-grade">Total Grade</label>
+                    <input
+                      id="exam-total-grade"
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      className="login-input login-input--plain"
+                      value={examForm.total_grade}
+                      onChange={(e) => setField('total_grade', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="exam-form-col">
                     <label className="login-label" htmlFor="exam-duration">Duration (min)</label>
                     <input
                       id="exam-duration"
@@ -452,6 +468,7 @@ export function AdminExamsPage() {
                       <th>Subject</th>
                       <th>Teacher</th>
                       <th>Class</th>
+                      <th>Total Grade</th>
                       <th>Date</th>
                       <th>Duration</th>
                       <th>Questions</th>
@@ -490,6 +507,7 @@ export function AdminExamsPage() {
                               <span className="badge badge-class">{exam.class_id}</span>
                             ) : <span className="muted">All</span>}
                           </td>
+                          <td>{exam.total_grade ?? '—'}</td>
                           <td>{exam.exam_date || <span className="muted">—</span>}</td>
                           <td>{exam.duration} min</td>
                           <td>

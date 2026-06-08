@@ -170,9 +170,9 @@ def _build_admin_context(user, intent):
             if recent_grades:
                 percentages = []
                 for g in recent_grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        percentages.append(float(g.score) / total_q * 100)
+                    pct = g.get_percentage()
+                    if pct:
+                        percentages.append(float(pct))
                 if percentages:
                     avg = sum(percentages) / len(percentages)
                     lines.append(
@@ -214,9 +214,9 @@ def _build_admin_context(user, intent):
                 percentages = []
                 subject_avgs = {}
                 for g in recent_grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        pct = float(g.score) / total_q * 100
+                    pct = g.get_percentage()
+                    if pct:
+                        pct = float(pct)
                         percentages.append(pct)
                         subj = g.exam.subject.name if g.exam.subject else 'Unknown'
                         subject_avgs.setdefault(subj, []).append(pct)
@@ -351,9 +351,9 @@ def _build_teacher_context(user, intent):
             if my_grades:
                 percentages = []
                 for g in my_grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        percentages.append(float(g.score) / total_q * 100)
+                    pct = g.get_percentage()
+                    if pct:
+                        percentages.append(float(pct))
                 if percentages:
                     avg = sum(percentages) / len(percentages)
                     lines.append(f"My students' average grade: {round(avg)}%.")
@@ -408,9 +408,9 @@ def _build_teacher_context(user, intent):
                 percentages = []
                 subject_avgs = {}
                 for g in my_grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        pct = float(g.score) / total_q * 100
+                    pct = g.get_percentage()
+                    if pct:
+                        pct = float(pct)
                         percentages.append(pct)
                         subj = g.exam.subject.name if g.exam.subject else 'Unknown'
                         subject_avgs.setdefault(subj, []).append(pct)
@@ -528,9 +528,9 @@ def _build_student_context(user, intent):
             if grades:
                 percentages = []
                 for g in grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        percentages.append(float(g.score) / total_q * 100)
+                    pct = g.get_percentage()
+                    if pct:
+                        percentages.append(float(pct))
                 if percentages:
                     lines.append(
                         f"Overall average: {round(sum(percentages)/len(percentages))}%."
@@ -569,13 +569,14 @@ def _build_student_context(user, intent):
                 details = []
                 percentages = []
                 for g in grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        pct = round(float(g.score) / total_q * 100)
+                    pct = g.get_percentage()
+                    if pct:
+                        pct = round(float(pct))
                         percentages.append(pct)
                         subj = g.exam.subject.name if g.exam.subject else 'Unknown'
+                        total_grade = float(g.exam.total_grade)
                         details.append(
-                            f"{g.exam.name} ({subj}): {g.score}/{total_q} = {pct}%"
+                            f"{g.exam.name} ({subj}): {g.score}/{total_grade} = {pct}%"
                         )
                 if details:
                     lines.append(
@@ -609,13 +610,14 @@ def _build_student_context(user, intent):
             if grades:
                 lines.append("Your recent exam results:")
                 for g in grades:
-                    total_q = g.exam.get_questions_count()
-                    if total_q > 0:
-                        pct = round(float(g.score) / total_q * 100)
+                    pct = g.get_percentage()
+                    if pct:
+                        pct = round(float(pct))
                         subj = g.exam.subject.name if g.exam.subject else 'Unknown'
+                        total_grade = float(g.exam.total_grade)
                         lines.append(
                             f"  {g.exam.name} ({subj}): "
-                            f"{g.score}/{total_q} = {pct}%"
+                            f"{g.score}/{total_grade} = {pct}%"
                         )
             else:
                 lines.append("No exam results recorded for you yet.")
@@ -703,11 +705,9 @@ def _build_parent_context(user, intent):
                 if grades:
                     percentages = []
                     for g in grades:
-                        total_q = g.exam.get_questions_count()
-                        if total_q > 0:
-                            percentages.append(
-                                round(float(g.score) / total_q * 100)
-                            )
+                        pct = g.get_percentage()
+                        if pct:
+                            percentages.append(round(float(pct)))
                     if percentages:
                         lines.append(
                             f"    Grade average: "
@@ -755,9 +755,9 @@ def _build_parent_context(user, intent):
                     percentages = []
                     grade_strs = []
                     for g in grades:
-                        total_q = g.exam.get_questions_count()
-                        if total_q > 0:
-                            p = round(float(g.score) / total_q * 100)
+                        pct = g.get_percentage()
+                        if pct:
+                            p = round(float(pct))
                             percentages.append(p)
                             subj = g.exam.subject.name if g.exam.subject else 'Exam'
                             grade_strs.append(f"{subj}: {p}%")

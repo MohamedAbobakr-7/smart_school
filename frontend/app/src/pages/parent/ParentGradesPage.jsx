@@ -98,7 +98,7 @@ export function ParentGradesPage() {
     const values = filteredGrades
       .map((g) => {
         if (typeof g.percentage === 'number') return g.percentage
-        const total = Number(g.total_questions || 0)
+        const total = Number(g.total_grade || g.total_questions || 0)
         const score = Number(g.score || 0)
         if (total > 0) return (score / total) * 100
         return null
@@ -185,7 +185,7 @@ export function ParentGradesPage() {
                 </thead>
                 <tbody>
                   {filteredGrades.map((g) => {
-                    const isLow = g.percentage != null ? g.percentage < 50 : (g.total_questions > 0 && g.score / g.total_questions < 0.5)
+                    const isLow = g.percentage != null ? g.percentage < 50 : ((g.total_grade || g.total_questions) > 0 && g.score / (g.total_grade || g.total_questions) < 0.5)
                     return (
                       <tr key={g.id} style={{ 
                         background: isLow ? 'rgba(239, 68, 68, 0.05)' : 'transparent' 
@@ -195,7 +195,7 @@ export function ParentGradesPage() {
                         <td style={{ color: isLow ? '#ef4444' : 'inherit', fontWeight: isLow ? 600 : 'normal' }}>
                           {g.score ?? '—'}
                         </td>
-                        <td>{g.total_questions ?? '—'}</td>
+                        <td>{g.total_grade ?? g.total_questions ?? '—'}</td>
                         <td style={{ color: isLow ? '#ef4444' : 'inherit', fontWeight: isLow ? 600 : 'normal' }}>
                           {formatPct(g.percentage)}
                         </td>

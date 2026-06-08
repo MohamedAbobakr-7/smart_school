@@ -207,7 +207,9 @@ export function StudentSubjectsPage() {
                     <div>
                       {s.teacher_names && s.teacher_names.length > 0 ? (
                         <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                          <span style={{ fontWeight: 600, color: '#374151' }}>Teachers:</span>{' '}
+                          <span style={{ fontWeight: 600, color: '#374151' }}>
+                            {s.teacher_names.length === 1 ? 'Teacher:' : 'Teachers:'}
+                          </span>{' '}
                           {s.teacher_names.join(', ')}
                         </div>
                       ) : (
@@ -224,7 +226,7 @@ export function StudentSubjectsPage() {
                         borderRadius: '999px',
                         fontWeight: 600,
                       }}>
-                        {s.teachers_count} teacher(s)
+                        {s.teachers_count === 1 ? '1 teacher' : `${s.teachers_count} teachers`}
                       </span>
                     )}
                   </div>

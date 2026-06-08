@@ -124,6 +124,9 @@ class UserViewSet(viewsets.ModelViewSet):
             total_subjects  = Subject.objects.count()
 
             # ── This week window ──────────────────────────────────────────────
+            # Use the current ISO week; if it has zero attendance records
+            # (e.g. early Monday), fall back to the previous completed week
+            # so the dashboard always shows meaningful data.
             today      = date.today()
             week_start = today - timedelta(days=today.weekday())
             week_end   = week_start + timedelta(days=6)
@@ -132,6 +135,18 @@ class UserViewSet(viewsets.ModelViewSet):
                 date__gte=week_start, date__lte=week_end
             )
             total_att = att_week.count()
+
+            if total_att == 0:
+                # No records yet in the current week → show the previous week
+                prev_end   = week_start - timedelta(days=1)   # last Sunday
+                prev_start = prev_end - timedelta(days=6)     # previous Monday
+                week_start = prev_start
+                week_end   = prev_end
+                att_week = Attendance.objects.filter(
+                    date__gte=week_start, date__lte=week_end
+                )
+                total_att = att_week.count()
+
             present   = att_week.filter(status=Attendance.PRESENT).count()
             attendance_rate = round(present / total_att * 100, 1) if total_att else None
 
@@ -144,9 +159,9 @@ class UserViewSet(viewsets.ModelViewSet):
             total_pct  = 0.0
             grade_cnt  = 0
             for g in all_grades:
-                q = g.exam.get_questions_count()
-                if q and q > 0:
-                    total_pct += float(g.score) / float(q) * 100.0
+                pct = g.get_percentage()
+                if pct is not None:
+                    total_pct += float(pct)
                     grade_cnt += 1
             avg_score = round(total_pct / grade_cnt, 1) if grade_cnt else None
 
@@ -173,12 +188,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 .select_related('exam', 'exam__subject')
                 .order_by()
             ):
-                q = g.exam.get_questions_count()
-                if not q:
+                pct = g.get_percentage()
+                if not pct:
                     continue
                 name = g.exam.subject.name
                 bucket = subj_scores_map.setdefault(name, [0.0, 0])
-                bucket[0] += float(g.score) / float(q) * 100.0
+                bucket[0] += float(pct)
                 bucket[1] += 1
 
             subject_scores = [

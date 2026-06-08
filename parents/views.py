@@ -92,6 +92,18 @@ class ParentViewSet(viewsets.ModelViewSet):
             week_start = today - timedelta(days=today.weekday())
             week_end   = week_start + timedelta(days=6)
 
+            # If the current week has zero attendance for these children,
+            # fall back to the previous completed week so the chart is useful.
+            children_ids = [c.id for c in children]
+            if children_ids and not Attendance.objects.filter(
+                student_id__in=children_ids,
+                date__gte=week_start, date__lte=week_end,
+            ).exists():
+                prev_end   = week_start - timedelta(days=1)
+                prev_start = prev_end - timedelta(days=6)
+                week_start = prev_start
+                week_end   = prev_end
+
             # Per-child stats + aggregate accumulators
             total_att_pct = 0.0
             total_score   = 0.0
@@ -130,10 +142,10 @@ class ParentViewSet(viewsets.ModelViewSet):
                 c_pct_sum = 0.0
                 c_grade_cnt = 0
                 for g in child_grades:
-                    q = g.exam.get_questions_count()
-                    if not q:
+                    pct = g.get_percentage()
+                    if not pct:
                         continue
-                    pct = float(g.score) / float(q) * 100.0
+                    pct = float(pct)
                     c_pct_sum += pct
                     c_grade_cnt += 1
                     sname = g.exam.subject.name
@@ -162,8 +174,7 @@ class ParentViewSet(viewsets.ModelViewSet):
                     .select_related('exam', 'exam__subject')
                     .order_by('-created_at')[:3]
                 ):
-                    q = g.exam.get_questions_count() or 1
-                    pct = round(float(g.score) / float(q) * 100, 1)
+                    pct = round(float(g.get_percentage()), 1)
                     recent_raw.append({
                         'ts': g.created_at,
                         'title': f'{child_name}: {g.exam.name}',

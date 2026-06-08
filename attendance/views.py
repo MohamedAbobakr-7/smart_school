@@ -19,6 +19,7 @@ from .serializers import AttendanceSerializer, AttendanceSessionSerializer
 from .face_recognition_client import get_face_recognition_client
 from students.models import Student
 from teachers.models import Teacher
+from notifications.models import Notification
 
 
 class AttendanceViewSet(viewsets.ModelViewSet):
@@ -389,6 +390,34 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         session.complete()
+
+        # Send absence notifications to parents
+        absent_records = session.attendances.filter(status=Attendance.ABSENT).select_related('student__parent__user', 'student__user')
+        
+        notifications_to_create = []
+        for att in absent_records:
+            student = att.student
+            if student.parent and student.parent.user:
+                dedupe_key = f"att_session_{session.id}_absent_{student.id}"
+                # Ensure no duplicate notification
+                if not Notification.objects.filter(dedupe_key=dedupe_key).exists():
+                    student_name = student.user.get_full_name() or student.student_id
+                    notifications_to_create.append(Notification(
+                        recipient=student.parent.user,
+                        notification_type=Notification.Type.ATTENDANCE,
+                        title="Absence Alert",
+                        body=f"Your child {student_name} was absent today.",
+                        dedupe_key=dedupe_key,
+                        metadata={
+                            "session_id": session.id,
+                            "student_id": student.id,
+                            "date": str(session.date)
+                        }
+                    ))
+        
+        if notifications_to_create:
+            Notification.objects.bulk_create(notifications_to_create, ignore_conflicts=True)
+
         return Response({'success': True, 'message': str(MSG_SESSION_COMPLETED), 'session': self.get_serializer(session).data})
 
     @action(detail=True, methods=['post'], url_path='cancel', url_name='cancel-session')

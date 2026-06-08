@@ -69,7 +69,7 @@ class ExamSerializer(serializers.ModelSerializer):
             'exam_type', 'exam_type_display',
             'subject', 'subject_name', 'subject_code',
             'teacher', 'teacher_name', 'teacher_id_display',
-            'duration', 'exam_date', 'class_id',
+            'total_grade', 'duration', 'exam_date', 'class_id',
             'questions_count', 'grades_count',
             'created_at', 'updated_at'
         ]
@@ -103,13 +103,14 @@ class GradeSerializer(serializers.ModelSerializer):
     percentage = serializers.SerializerMethodField()
     grade_letter = serializers.SerializerMethodField()
     total_questions = serializers.SerializerMethodField()
+    total_grade = serializers.DecimalField(source='exam.total_grade', max_digits=6, decimal_places=2, read_only=True)
     
     class Meta:
         model = Grade
         fields = [
             'id', 'student', 'student_id', 'student_name',
             'exam', 'exam_name', 'subject_name',
-            'score', 'percentage', 'grade_letter', 'total_questions',
+            'score', 'percentage', 'grade_letter', 'total_questions', 'total_grade',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -143,12 +144,11 @@ class GradeSerializer(serializers.ModelSerializer):
                     str(MSG_GRADE_DUPLICATE)
                 )
         
-        # Validate score doesn't exceed total questions
+        # Validate score doesn't exceed exam total grade
         if exam and score is not None:
-            total_questions = exam.get_questions_count()
-            if total_questions > 0 and score > total_questions:
+            if score > exam.total_grade:
                 raise serializers.ValidationError(
-                    str(MSG_SCORE_EXCEEDS_TOTAL).format(score=score, total_questions=total_questions)
+                    str(MSG_SCORE_EXCEEDS_TOTAL).format(score=score, total_grade=exam.total_grade)
                 )
         
         return data

@@ -62,7 +62,7 @@ MSG_OPTIONS_MUST_BE_LIST = _('Options must be a list/array.')
 MSG_MIN_OPTIONS = _('At least 2 options are required for MCQ.')
 MSG_CORRECT_ANSWER_INDEX = _('correct_answer index ({index}) must be less than number of options ({count}).')
 MSG_GRADE_DUPLICATE = _('Grade already exists for this student and exam.')
-MSG_SCORE_EXCEEDS_TOTAL = _('Score ({score}) cannot exceed total questions ({total_questions}).')
+MSG_SCORE_EXCEEDS_TOTAL = _('Score ({score}) cannot exceed the exam total grade ({total_grade}).')
 
 # ──── Classes ────
 MSG_CLASS_NAME_REQUIRED = _('Class name is required.')

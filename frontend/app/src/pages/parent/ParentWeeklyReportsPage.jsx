@@ -141,7 +141,7 @@ export function ParentWeeklyReportsPage() {
     const scored = childGrades.map(g => {
       if (typeof g.percentage === 'number') return g.percentage
       const score = Number(g.score || 0)
-      const total = Number(g.total_questions || g.max_score || 0)
+      const total = Number(g.total_grade || g.total_questions || g.max_score || 0)
       if (total > 0) return (score / total) * 100
       return null
     }).filter(v => v !== null && !isNaN(v))
@@ -265,7 +265,7 @@ export function ParentWeeklyReportsPage() {
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                   {recentGrades.map((g) => {
                     const pctValue = typeof g.percentage === 'number' ? g.percentage : (
-                      (g.total_questions || g.max_score) > 0 ? (g.score / (g.total_questions || g.max_score)) * 100 : null
+                      (g.total_grade || g.total_questions || g.max_score) > 0 ? (g.score / (g.total_grade || g.total_questions || g.max_score)) * 100 : null
                     )
                     return (
                       <li key={g.id} style={{
@@ -285,7 +285,7 @@ export function ParentWeeklyReportsPage() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ color: 'var(--text-secondary, #374151)', fontSize: '0.85rem' }}>
-                            {g.score}/{g.total_questions || g.max_score || '—'}
+                            {g.score}/{g.total_grade || g.total_questions || g.max_score || '—'}
                           </span>
                           <span style={{
                             fontWeight: 700,

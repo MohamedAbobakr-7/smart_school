@@ -55,7 +55,7 @@ export function StudentGradesPage() {
     const values = grades
       .map((g) => {
         if (typeof g.percentage === 'number') return g.percentage
-        const total = Number(g.total_questions || 0)
+        const total = Number(g.total_grade || g.total_questions || 0)
         const score = Number(g.score || 0)
         if (total > 0) return (score / total) * 100
         return null
@@ -102,7 +102,7 @@ export function StudentGradesPage() {
                       <td>{g.subject_name || '—'}</td>
                       <td>{g.exam_name || '—'}</td>
                       <td>{g.score ?? '—'}</td>
-                      <td>{g.total_questions ?? '—'}</td>
+                      <td>{g.total_grade ?? g.total_questions ?? '—'}</td>
                       <td>{formatDate(g.created_at)}</td>
                     </tr>
                   ))}

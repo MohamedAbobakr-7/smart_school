@@ -2,15 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
-import { apiFetch } from '../../lib/api'
+import { apiFetch, apiFetchAll } from '../../lib/api'
 
 const ROLES = ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT']
-
-function parseList(payload) {
-  if (Array.isArray(payload)) return payload
-  if (payload?.results && Array.isArray(payload.results)) return payload.results
-  return []
-}
 
 function displayName(user) {
   const n = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim()
@@ -30,10 +24,8 @@ export function AdminUsersPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await apiFetch('/users/')
-      const data = await res.json().catch(() => [])
-      if (!res.ok) throw new Error(data.detail || `Failed to load users (${res.status})`)
-      setUsers(parseList(data))
+      const allUsers = await apiFetchAll('/users/')
+      setUsers(allUsers)
     } catch (e) {
       setError(e.message || 'Failed to load users.')
     } finally {

@@ -192,7 +192,7 @@ def notify_low_grade(sender, instance: Grade, **kwargs):
     student = instance.student
     exam = instance.exam
     subject = exam.subject
-    total = exam.get_questions_count()
+    total = float(exam.total_grade)
     score = float(instance.score)
     student_name = student.user.get_full_name() or student.student_id or str(student.pk)
 

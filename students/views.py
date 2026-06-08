@@ -235,14 +235,13 @@ class StudentViewSet(viewsets.ModelViewSet):
         total_pct = 0.0
         subj_map: dict = {}
         for g in grade_qs:
-            q = g.exam.get_questions_count()
-            if not q:
+            pct = g.get_percentage()
+            if not pct:
                 continue
-            pct = float(g.score) / float(q) * 100.0
-            total_pct += pct
+            total_pct += float(pct)
             sname = g.exam.subject.name
             bucket = subj_map.setdefault(sname, [0.0, 0])
-            bucket[0] += pct
+            bucket[0] += float(pct)
             bucket[1] += 1
 
         avg_score_pct = round(total_pct / grades_count, 1) if grades_count else None
@@ -351,15 +350,14 @@ class StudentViewSet(viewsets.ModelViewSet):
             grade_cnt = 0
             subj_map: dict = {}
             for g in grades_qs:
-                q = g.exam.get_questions_count()
-                if not q:
+                pct = g.get_percentage()
+                if not pct:
                     continue
-                pct = float(g.score) / float(q) * 100.0
-                total_pct += pct
+                total_pct += float(pct)
                 grade_cnt += 1
                 sname = g.exam.subject.name
                 bucket = subj_map.setdefault(sname, [0.0, 0])
-                bucket[0] += pct
+                bucket[0] += float(pct)
                 bucket[1] += 1
 
             avg_score = round(total_pct / grade_cnt, 1) if grade_cnt else None
@@ -376,13 +374,22 @@ class StudentViewSet(viewsets.ModelViewSet):
             present   = att_qs.filter(status=Attendance.PRESENT).count()
             attendance_rate = round(present / total_att * 100, 1) if total_att else None
 
-            # Last 7 days trend
+            # Last 7 days trend — fall back to previous week if current week is empty
             today = date.today()
             _DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            week_start = today - timedelta(days=today.weekday())
+            week_end   = week_start + timedelta(days=6)
+
+            week_att = att_qs.filter(date__gte=week_start, date__lte=week_end)
+            if week_att.count() == 0:
+                prev_end   = week_start - timedelta(days=1)
+                prev_start = prev_end - timedelta(days=6)
+                week_start = prev_start
+                week_end   = prev_end
+                week_att   = att_qs.filter(date__gte=week_start, date__lte=week_end)
+
             day_present = {i: 0 for i in range(7)}
-            for row in att_qs.filter(
-                date__gte=today - timedelta(days=6), date__lte=today
-            ).values('date', 'status'):
+            for row in week_att.values('date', 'status'):
                 if row['status'] == Attendance.PRESENT:
                     day_present[row['date'].weekday()] += 1
 
@@ -410,8 +417,7 @@ class StudentViewSet(viewsets.ModelViewSet):
 
             recent_grades = []
             for i, g in enumerate(recent_qs):
-                q = g.exam.get_questions_count() or 1
-                pct = round(float(g.score) / float(q) * 100, 1)
+                pct = round(float(g.get_percentage()), 1)
                 recent_grades.append({
                     'id': str(g.id),
                     'title': g.exam.name,

@@ -39,6 +39,15 @@ class Exam(models.Model):
         help_text='Teacher who created this exam'
     )
     
+    # Total grade for this exam
+    total_grade = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(1)],
+        default=100,
+        help_text='Total grade of the exam (e.g. 50, 100)'
+    )
+
     # Duration in minutes
     duration = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
@@ -104,8 +113,8 @@ class Exam(models.Model):
         return self.questions.count()
     
     def get_total_points(self):
-        """Get total points for this exam (assuming 1 point per question)"""
-        return self.questions.count()
+        """Get total points for this exam (the configured total_grade)"""
+        return float(self.total_grade)
     
     def get_grades_count(self):
         """Get the number of students who have taken this exam"""
@@ -258,10 +267,10 @@ class Grade(models.Model):
         return f"{self.student.student_id} - {self.exam.name} - Score: {self.score}"
     
     def get_percentage(self):
-        """Calculate percentage score"""
-        total_questions = self.exam.get_questions_count()
-        if total_questions > 0:
-            return (self.score / total_questions) * 100
+        """Calculate percentage score based on exam's total_grade"""
+        total_grade = self.exam.total_grade
+        if total_grade and total_grade > 0:
+            return (self.score / total_grade) * 100
         return 0
     
     def get_grade_letter(self):

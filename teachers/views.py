@@ -160,6 +160,16 @@ class TeacherViewSet(viewsets.ModelViewSet):
             week_start = today - timedelta(days=today.weekday())
             week_end   = week_start + timedelta(days=6)
 
+            # If the current week has zero sessions for this teacher,
+            # fall back to the previous completed week so the chart is useful.
+            if not AttendanceSession.objects.filter(
+                instructor=teacher, date__gte=week_start, date__lte=week_end
+            ).exists():
+                prev_end   = week_start - timedelta(days=1)
+                prev_start = prev_end - timedelta(days=6)
+                week_start = prev_start
+                week_end   = prev_end
+
             sessions_this_week = (
                 AttendanceSession.objects
                 .filter(instructor=teacher, date__gte=week_start, date__lte=week_end)
@@ -179,9 +189,9 @@ class TeacherViewSet(viewsets.ModelViewSet):
             total_pct = 0.0
             grade_count = 0
             for g in grades_qs:
-                q_count = g.exam.get_questions_count()
-                if q_count and q_count > 0:
-                    total_pct += float(g.score) / float(q_count) * 100.0
+                pct = g.get_percentage()
+                if pct is not None:
+                    total_pct += float(pct)
                     grade_count += 1
 
             avg_score = round(total_pct / grade_count, 1) if grade_count > 0 else None

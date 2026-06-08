@@ -36,12 +36,8 @@ export function TeacherExamsPage() {
   const [examName, setExamName] = useState('')
   const [examType, setExamType] = useState('quiz')
   const [examSubject, setExamSubject] = useState('')
+  const [examTotalGrade, setExamTotalGrade] = useState(100)
   const [examDuration, setExamDuration] = useState(60)
-
-  const [qExam, setQExam] = useState('')
-  const [qText, setQText] = useState('')
-  const [qOpt, setQOpt] = useState(['', '', '', ''])
-  const [qCorrect, setQCorrect] = useState(0)
 
   // Bulk Grading States
   const [bSubject, setBSubject] = useState('')
@@ -104,7 +100,9 @@ export function TeacherExamsPage() {
         const res = await apiFetch(`/exams/${bExam}/`)
         if (!res.ok || cancelled) return
         const detail = await res.json()
-        const n = Array.isArray(detail.questions) ? detail.questions.length : 0
+        // Use total_grade first, fall back to questions count
+        const tg = detail.total_grade
+        const n = tg ? Number(tg) : (Array.isArray(detail.questions) ? detail.questions.length : 0)
         if (!cancelled) setBMax(n)
       })()
     return () => {
@@ -129,6 +127,7 @@ export function TeacherExamsPage() {
           exam_type: examType,
           subject: Number(examSubject),
           teacher: teacherId,
+          total_grade: Math.max(1, Number(examTotalGrade) || 100),
           duration: Math.max(1, Number(examDuration) || 60),
         },
       })
@@ -140,43 +139,6 @@ export function TeacherExamsPage() {
       await refreshData()
     } catch (err) {
       setMsg(typeof err.message === 'string' ? err.message : 'Create assessment failed')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function submitQuestion(e) {
-    e.preventDefault()
-    setMsg('')
-    if (!qExam) {
-      setMsg('Select an exam.')
-      return
-    }
-    const options = qOpt.map((o) => o.trim()).filter(Boolean)
-    if (options.length < 2) {
-      setMsg('Enter at least two answer options.')
-      return
-    }
-    setBusy(true)
-    try {
-      const res = await apiFetch('/questions/', {
-        method: 'POST',
-        body: {
-          exam: Number(qExam),
-          text: qText.trim(),
-          options,
-          correct_answer: Number(qCorrect),
-        },
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(JSON.stringify(data) || `HTTP ${res.status}`)
-      setMsg('Question added.')
-      setQText('')
-      setQOpt(['', '', '', ''])
-      setQCorrect(0)
-      await refreshData()
-    } catch (err) {
-      setMsg(typeof err.message === 'string' ? err.message : 'Add question failed')
     } finally {
       setBusy(false)
     }
@@ -276,7 +238,7 @@ export function TeacherExamsPage() {
   if (loadError) {
     return (
       <>
-        <PageHeader title="Assessments & Grades" subtitle="Create assessments, questions, and enter grades." />
+        <PageHeader title="Assessments & Grades" subtitle="Create assessments and enter grades." />
         <p className="teaching-error">{loadError}</p>
       </>
     )
@@ -286,7 +248,7 @@ export function TeacherExamsPage() {
     <>
       <PageHeader
         title="Assessments & Grades"
-        subtitle="Create an assessment, add reference questions, then record student scores. Subject lists come from your school data."
+        subtitle="Create an assessment, then record student scores. Subject lists come from your school data."
       />
 
       <div className="teaching-tabs" role="tablist" aria-label="Assessment tools">
@@ -296,13 +258,6 @@ export function TeacherExamsPage() {
           onClick={() => setTab('exam')}
         >
           Create Assessment
-        </button>
-        <button
-          type="button"
-          className={`teaching-tab${tab === 'question' ? ' is-active' : ''}`}
-          onClick={() => setTab('question')}
-        >
-          Question Bank
         </button>
         <button
           type="button"
@@ -364,6 +319,18 @@ export function TeacherExamsPage() {
                   ))
               }
             </select>
+            <label className="login-label" htmlFor="te-exam-total-grade">
+              Total Grade
+            </label>
+            <input
+              id="te-exam-total-grade"
+              type="number"
+              min={1}
+              step="0.01"
+              className="login-input login-input--plain teaching-input-narrow"
+              value={examTotalGrade}
+              onChange={(e) => setExamTotalGrade(e.target.value)}
+            />
             <label className="login-label" htmlFor="te-exam-duration">
               Duration (minutes)
             </label>
@@ -378,79 +345,6 @@ export function TeacherExamsPage() {
             <div className="feature-actions">
               <button type="submit" className="btn btn-primary" disabled={busy || !teacherId}>
                 Create Assessment
-              </button>
-            </div>
-          </form>
-        </Card>
-      ) : null}
-
-      {tab === 'question' ? (
-        <Card title="Question Bank">
-          <form className="teaching-form" onSubmit={submitQuestion}>
-            <label className="login-label" htmlFor="te-q-exam">
-              Assessment
-            </label>
-            <select
-              id="te-q-exam"
-              className="login-input login-input--plain teaching-input-wide"
-              value={qExam}
-              onChange={(e) => setQExam(e.target.value)}
-              required
-            >
-              <option value="">Select assessment…</option>
-              {myExams.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.name} ({x.exam_type_display || 'Assessment'})
-                </option>
-              ))}
-            </select>
-            <label className="login-label" htmlFor="te-q-text">
-              Question text
-            </label>
-            <textarea
-              id="te-q-text"
-              className="teaching-textarea"
-              rows={3}
-              value={qText}
-              onChange={(e) => setQText(e.target.value)}
-              placeholder="Question…"
-              required
-            />
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i}>
-                <label className="login-label" htmlFor={`te-q-opt-${i}`}>
-                  Option {i + 1}
-                </label>
-                <input
-                  id={`te-q-opt-${i}`}
-                  className="login-input login-input--plain teaching-input-wide"
-                  value={qOpt[i]}
-                  onChange={(e) => {
-                    const next = [...qOpt]
-                    next[i] = e.target.value
-                    setQOpt(next)
-                  }}
-                />
-              </div>
-            ))}
-            <label className="login-label" htmlFor="te-q-correct">
-              Correct option (index)
-            </label>
-            <select
-              id="te-q-correct"
-              className="login-input login-input--plain teaching-input-narrow"
-              value={qCorrect}
-              onChange={(e) => setQCorrect(Number(e.target.value))}
-            >
-              {[0, 1, 2, 3].map((i) => (
-                <option key={i} value={i}>
-                  {i} — option {i + 1}
-                </option>
-              ))}
-            </select>
-            <div className="feature-actions">
-              <button type="submit" className="btn btn-primary" disabled={busy}>
-                Add question
               </button>
             </div>
           </form>
@@ -553,7 +447,7 @@ export function TeacherExamsPage() {
                                 <div className="student-table-avatar student-table-avatar--empty" style={{ width: 32, height: 32, borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>📷</div>
                               )}
                             </td>
-                            <td>{s.user?.first_name ? `${s.user.first_name} ${s.user.last_name || ''}` : `Student #${s.id}`}</td>
+                            <td>{s.user_display_name || `Student #${s.id}`}</td>
                             <td>{s.student_id || '—'}</td>
                             <td>
                               <input

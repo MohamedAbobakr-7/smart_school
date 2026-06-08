@@ -54,9 +54,9 @@ def build_student_stats_list(students_qs, request):
         total_grade_pct = 0.0
         grade_count = 0
         for g in grade_lists[st.id]:
-            qn = g.exam.get_questions_count()
-            if qn and qn > 0:
-                total_grade_pct += float(g.score) / float(qn) * 100.0
+            pct = g.get_percentage()
+            if pct:
+                total_grade_pct += float(pct)
                 grade_count += 1
 
         avg_grade = round(total_grade_pct / grade_count, 1) if grade_count else None

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date, timedelta
-from decimal import Decimal
 from typing import Any
 
 from django.db.models import Count, Q, Sum
@@ -23,10 +22,10 @@ def _pct(part: int, whole: int) -> float:
 
 
 def _grade_percentage(g: Grade) -> float:
-    total = g.exam.get_questions_count()
-    if not total:
+    pct = g.get_percentage()
+    if not pct:
         return 0.0
-    return float((g.score / Decimal(total)) * Decimal(100))
+    return float(pct)
 
 
 def build_weekly_snapshot(

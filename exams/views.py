@@ -4,11 +4,11 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from users.permissions import IsAdmin, IsAdminOrTeacher, IsStudent, IsParent
-from .models import Exam, Question, Grade
+from users.permissions import IsAdminOrTeacher
+from .models import Exam, Grade
 from .serializers import (
     ExamSerializer, ExamDetailSerializer,
-    QuestionSerializer, GradeSerializer
+    GradeSerializer
 )
 
 
@@ -103,43 +103,6 @@ class ExamViewSet(viewsets.ModelViewSet):
 
         serializer = ExamSerializer(upcoming_exams, many=True, context={'request': request})
         return Response(serializer.data)
-
-
-class QuestionViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for Question management.
-    - List/Retrieve: ADMIN, TEACHER (all), STUDENT (questions for their exams)
-    - Create/Update/Delete: ADMIN, TEACHER only
-    """
-    queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_permissions(self):
-        """Override permissions based on action"""
-        if self.action in ['create', 'destroy', 'update', 'partial_update']:
-            # Only ADMIN and TEACHER can create, update, or delete
-            return [IsAdminOrTeacher()]
-        elif self.action in ['list', 'retrieve']:
-            # Authenticated users can view (filtered by role in get_queryset)
-            return [IsAuthenticated()]
-        return super().get_permissions()
-
-    def get_queryset(self):
-        """Filter queryset based on user role"""
-        user = self.request.user
-        
-        if user.is_admin() or user.is_teacher():
-            # ADMIN and TEACHER can see all questions
-            return Question.objects.all()
-        elif user.is_student():
-            # STUDENT can see questions for exams they have grades for
-            if hasattr(user, 'student_profile'):
-                exam_ids = Grade.objects.filter(student=user.student_profile).values_list('exam_id', flat=True)
-                return Question.objects.filter(exam_id__in=exam_ids)
-            return Question.objects.none()
-        
-        return Question.objects.none()
 
 
 class GradeViewSet(viewsets.ModelViewSet):
