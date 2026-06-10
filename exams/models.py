@@ -62,12 +62,54 @@ class Exam(models.Model):
         help_text='Date the exam is scheduled or was held'
     )
 
-    # Class identifier (optional) – links exam to a specific class group
-    class_id = models.CharField(
-        max_length=50,
+    # Grade level choices
+    KG = 'KG'
+    GRADE_1 = '1'
+    GRADE_2 = '2'
+    GRADE_3 = '3'
+    GRADE_4 = '4'
+    GRADE_5 = '5'
+    GRADE_6 = '6'
+    GRADE_7 = '7'
+    GRADE_8 = '8'
+    GRADE_9 = '9'
+    GRADE_10 = '10'
+    GRADE_11 = '11'
+    GRADE_12 = '12'
+
+    GRADE_CHOICES = [
+        (KG, _('Kindergarten')),
+        (GRADE_1, _('Grade 1')),
+        (GRADE_2, _('Grade 2')),
+        (GRADE_3, _('Grade 3')),
+        (GRADE_4, _('Grade 4')),
+        (GRADE_5, _('Grade 5')),
+        (GRADE_6, _('Grade 6')),
+        (GRADE_7, _('Grade 7')),
+        (GRADE_8, _('Grade 8')),
+        (GRADE_9, _('Grade 9')),
+        (GRADE_10, _('Grade 10')),
+        (GRADE_11, _('Grade 11')),
+        (GRADE_12, _('Grade 12')),
+    ]
+
+    # Grade level – required, indicates which grade level this exam is for
+    grade = models.CharField(
+        max_length=10,
+        choices=GRADE_CHOICES,
         blank=True,
         default='',
-        help_text='Class identifier (e.g., G10-A). Leave blank for all classes.'
+        help_text='Grade level this exam is for (e.g., 1, 2, 3... 12, KG). Auto-populated from school_class if set.'
+    )
+
+    # Structured FK link to SchoolClass – the specific class group this exam is for
+    school_class = models.ForeignKey(
+        'classes.SchoolClass',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='exams',
+        help_text='Specific class group this exam is for. When set, grade is auto-derived from the class name.'
     )
 
     # Assessment types
@@ -103,10 +145,53 @@ class Exam(models.Model):
             models.Index(fields=['subject']),
             models.Index(fields=['teacher']),
             models.Index(fields=['created_at']),
+            models.Index(fields=['school_class']),
         ]
 
     def __str__(self):
         return f"{self.name} - {self.subject.name} ({self.duration} min)"
+
+    def _derive_grade_from_class_name(self, class_name):
+        """Derive a grade level string from a SchoolClass name.
+
+        Handles patterns like:
+          - "Grade 5", "Grade 5 - A", "grade5", "G5", "G5-A"
+          - "Kindergarten", "KG", "KG-A"
+          - "Year 10", "Year 10 - B"
+        Returns one of the GRADE_CHOICES values (e.g. '5', 'KG') or '' if no match.
+        """
+        import re
+        if not class_name:
+            return ''
+        name = class_name.strip()
+
+        # Kindergarten patterns
+        if re.search(r'\bKG\b|\bkindergarten\b', name, re.IGNORECASE):
+            return self.KG
+
+        # "Grade N" or "G N" or "GN" patterns (N can be 1-12)
+        m = re.search(r'\b(?:Grade|G)\s*(\d{1,2})\b', name, re.IGNORECASE)
+        if m:
+            num = int(m.group(1))
+            if 1 <= num <= 12:
+                return str(num)
+
+        # "Year N" pattern
+        m = re.search(r'\bYear\s*(\d{1,2})\b', name, re.IGNORECASE)
+        if m:
+            num = int(m.group(1))
+            if 1 <= num <= 12:
+                return str(num)
+
+        return ''
+
+    def save(self, *args, **kwargs):
+        """Auto-populate grade from school_class if grade is empty."""
+        if not self.grade and self.school_class:
+            derived = self._derive_grade_from_class_name(self.school_class.name)
+            if derived:
+                self.grade = derived
+        super().save(*args, **kwargs)
     
     def get_questions_count(self):
         """Get the total number of questions in this exam"""

@@ -125,8 +125,8 @@ export function AdminWeeklyReportsPage() {
       })
     }
 
-    const gradeTrend = classStatsArray.slice(0, 5).map(c => ({
-      name: c.name.substring(0, 10),
+    const gradeTrend = classStatsArray.map(c => ({
+      name: c.name,
       avg: Math.round(c.avgGrd)
     }))
 
@@ -218,12 +218,12 @@ export function AdminWeeklyReportsPage() {
       {/* Trends */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         <Card title="Attendance Trend (This Week)">
-          <div style={{ height: '300px', width: '100%', marginTop: '1rem' }}>
+          <div style={{ height: '400px', width: '100%', marginTop: '1rem' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics.attTrend}>
+              <LineChart data={analytics.attTrend} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eaeaea" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} domain={[0, 100]} dx={-10} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} angle={-35} textAnchor="end" height={60} tickMargin={15} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} domain={[0, 100]} width={40} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                 <Line type="monotone" dataKey="rate" stroke="#000" strokeWidth={3} dot={{ r: 4, fill: '#000', strokeWidth: 0 }} activeDot={{ r: 6 }} name="Attendance %" />
               </LineChart>
@@ -232,16 +232,18 @@ export function AdminWeeklyReportsPage() {
         </Card>
 
         <Card title="Average Grades by Class">
-          <div style={{ height: '300px', width: '100%', marginTop: '1rem' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics.gradeTrend}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eaeaea" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} domain={[0, 100]} dx={-10} />
-                <Tooltip cursor={{ fill: '#f4f4f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="avg" fill="#111827" radius={[4, 4, 0, 0]} name="Avg Grade %" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="weekly-chart-scroll" style={{ marginTop: '1rem' }}>
+            <div style={{ height: '400px', minWidth: analytics.gradeTrend.length > 8 ? analytics.gradeTrend.length * 70 : '100%', width: '100%' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.gradeTrend} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eaeaea" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} angle={-40} textAnchor="end" height={80} tickMargin={20} interval={0} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} domain={[0, 100]} width={40} />
+                  <Tooltip cursor={{ fill: '#f4f4f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  <Bar dataKey="avg" fill="#111827" radius={[4, 4, 0, 0]} name="Avg Grade %" maxBarSize={48} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </Card>
       </div>

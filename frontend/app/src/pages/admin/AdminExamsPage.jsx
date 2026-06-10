@@ -11,12 +11,43 @@ function fullName(user) {
   return n || user.username || '—'
 }
 
+/**
+ * Extract a grade-level label from a SchoolClass name.
+ * Handles "Grade 5 - A", "G5", "KG-A", "Year 10 - B", etc.
+ */
+function extractGradeLabel(className) {
+  if (!className) return null
+  const name = className.trim()
+  if (/\bKG\b|\bKindergarten\b/i.test(name)) return 'Kindergarten'
+  const m = name.match(/\b(?:Grade|G)\s*(\d{1,2})\b/i)
+  if (m) return `Grade ${m[1]}`
+  const ym = name.match(/\bYear\s*(\d{1,2})\b/i)
+  if (ym) return `Year ${ym[1]}`
+  return null
+}
+
+/**
+ * Extract a grade-level VALUE (matching Exam.GRADE_CHOICES) from a class name.
+ * Returns 'KG', '1'–'12', or '' if no match.
+ */
+function extractGradeValue(className) {
+  if (!className) return ''
+  const name = className.trim()
+  if (/\bKG\b|\bKindergarten\b/i.test(name)) return 'KG'
+  const m = name.match(/\b(?:Grade|G)\s*(\d{1,2})\b/i)
+  if (m) return m[1]
+  const ym = name.match(/\bYear\s*(\d{1,2})\b/i)
+  if (ym) return ym[1]
+  return ''
+}
+
 const EMPTY_EXAM = {
   name: '',
   exam_type: 'quiz',
   subject: '',
   teacher: '',
-  class_id: '',
+  grade: '',
+  school_class: '',
   total_grade: 100,
   duration: 60,
   exam_date: '',
@@ -35,6 +66,7 @@ export function AdminExamsPage() {
   const [students, setStudents] = useState([])
   const [grades, setGrades] = useState([])
   const [users, setUsers] = useState([])
+  const [classes, setClasses] = useState([])
 
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('exams') // 'exams' | 'grades'
@@ -43,11 +75,6 @@ export function AdminExamsPage() {
   const [examForm, setExamForm] = useState(EMPTY_EXAM)
   const [editing, setEditing] = useState(null)
 
-  /* ── grade form ──────────────────────────────────────────────── */
-  const [gradeExamId, setGradeExamId] = useState('')
-  const [gradeStudentId, setGradeStudentId] = useState('')
-  const [gradeScore, setGradeScore] = useState('')
-  const [editingGrade, setEditingGrade] = useState(null)
   const [gradeSearch, setGradeSearch] = useState('')
 
   /* ── load ────────────────────────────────────────────────────── */
@@ -55,7 +82,7 @@ export function AdminExamsPage() {
     setLoading(true)
     setError('')
     try {
-      const [examsData, subjectsData, teachersData, studentsData, gradesData, usersData] =
+      const [examsData, subjectsData, teachersData, studentsData, gradesData, usersData, classesData] =
         await Promise.all([
           apiFetchAll('/exams/'),
           apiFetchAll('/subjects/'),
@@ -63,6 +90,7 @@ export function AdminExamsPage() {
           apiFetchAll('/students/'),
           apiFetchAll('/grades/'),
           apiFetchAll('/users/'),
+          apiFetchAll('/classes/'),
         ])
       setExams(examsData)
       setSubjects(subjectsData)
@@ -70,6 +98,7 @@ export function AdminExamsPage() {
       setStudents(studentsData)
       setGrades(gradesData)
       setUsers(usersData)
+      setClasses(classesData)
     } catch (e) {
       setError(e.message || 'Failed to load exams module.')
     } finally {
@@ -85,6 +114,27 @@ export function AdminExamsPage() {
   const teacherById  = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
   const studentById  = useMemo(() => new Map(students.map((s) => [s.id, s])), [students])
   const examById     = useMemo(() => new Map(exams.map((e) => [e.id, e])), [exams])
+  const classById    = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes])
+
+  // Grade levels derived from all classes in the system
+  const gradeOptions = useMemo(() => {
+    if (classes.length === 0) return []
+    const seen = new Map()
+    for (const c of classes) {
+      const val = extractGradeValue(c.name || c.display_name)
+      const label = extractGradeLabel(c.name || c.display_name)
+      if (val && label && !seen.has(val)) {
+        seen.set(val, label)
+      }
+    }
+    return Array.from(seen.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => {
+        if (a.value === 'KG') return -1
+        if (b.value === 'KG') return 1
+        return Number(a.value) - Number(b.value)
+      })
+  }, [classes])
 
   const filteredExams = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -92,7 +142,7 @@ export function AdminExamsPage() {
     return exams.filter((e) => {
       const sub = subjectById.get(e.subject)
       const tch = teacherById.get(e.teacher)
-      const hay = `${e.name} ${sub?.name || ''} ${sub?.code || ''} ${e.class_id || ''} ${tch?.teacher_id || ''} ${e.exam_date || ''}`.toLowerCase()
+      const hay = `${e.name} ${sub?.name || ''} ${sub?.code || ''} ${e.grade_name || e.grade || ''} ${tch?.teacher_id || ''} ${e.exam_date || ''}`.toLowerCase()
       return hay.includes(q)
     })
   }, [exams, search, subjectById, teacherById])
@@ -123,7 +173,8 @@ export function AdminExamsPage() {
       exam_type: exam.exam_type || 'quiz',
       subject: exam.subject || '',
       teacher: exam.teacher || '',
-      class_id: exam.class_id || '',
+      grade: exam.grade || '',
+      school_class: exam.school_class || '',
       total_grade: exam.total_grade || 100,
       duration: exam.duration || 60,
       exam_date: exam.exam_date || '',
@@ -143,18 +194,21 @@ export function AdminExamsPage() {
   async function saveExam(e) {
     e.preventDefault()
     setMessage('')
-    if (!examForm.name.trim() || !examForm.subject || !examForm.teacher) {
-      setMessage('Name, Subject and Teacher are required.')
+    if (!examForm.name.trim() || !examForm.subject || !examForm.teacher || !examForm.grade) {
+      setMessage('Name, Subject, Teacher and Grade are required.')
       return
     }
     setBusy(true)
     try {
+      // Find a matching school_class for the selected grade level
+      const matchingClass = classes.find((c) => extractGradeValue(c.name || c.display_name) === examForm.grade)
       const body = {
         name: examForm.name.trim(),
         exam_type: examForm.exam_type,
         subject: Number(examForm.subject),
         teacher: Number(examForm.teacher),
-        class_id: examForm.class_id.trim(),
+        grade: examForm.grade,
+        school_class: matchingClass ? Number(matchingClass.id) : null,
         total_grade: Number(examForm.total_grade) || 100,
         duration: Number(examForm.duration) || 60,
         exam_date: examForm.exam_date || null,
@@ -195,50 +249,6 @@ export function AdminExamsPage() {
   }
 
   /* ── grade CRUD ──────────────────────────────────────────────── */
-  function startEditGrade(grade) {
-    setEditingGrade(grade)
-    setGradeExamId(String(grade.exam))
-    setGradeStudentId(String(grade.student))
-    setGradeScore(String(grade.score))
-    setMessage('')
-  }
-
-  function cancelEditGrade() {
-    setEditingGrade(null)
-    setGradeExamId('')
-    setGradeStudentId('')
-    setGradeScore('')
-  }
-
-  async function saveGrade(e) {
-    e.preventDefault()
-    setMessage('')
-    if (!gradeExamId || !gradeStudentId || gradeScore === '') {
-      setMessage('Exam, Student and Score are all required.')
-      return
-    }
-    setBusy(true)
-    try {
-      const body = {
-        exam: Number(gradeExamId),
-        student: Number(gradeStudentId),
-        score: parseFloat(gradeScore),
-      }
-      const res = editingGrade
-        ? await apiFetch(`/grades/${editingGrade.id}/`, { method: 'PATCH', body })
-        : await apiFetch('/grades/', { method: 'POST', body })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.detail || JSON.stringify(json) || `Save failed (${res.status})`)
-      setMessage(editingGrade ? 'Grade updated.' : 'Grade recorded.')
-      cancelEditGrade()
-      await loadData()
-    } catch (err) {
-      setMessage(err.message || 'Save grade failed.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   async function deleteGrade(grade) {
     const st = studentById.get(grade.student)
     const ex = examById.get(grade.exam)
@@ -252,22 +262,12 @@ export function AdminExamsPage() {
         throw new Error(json.detail || `Delete failed (${res.status})`)
       }
       setMessage('Grade deleted.')
-      if (editingGrade?.id === grade.id) cancelEditGrade()
       await loadData()
     } catch (err) {
       setMessage(err.message || 'Delete failed.')
     } finally {
       setBusy(false)
     }
-  }
-
-  /* ── helper: students already graded for a given exam ────────── */
-  function gradedStudentIds(examId) {
-    return new Set(
-      grades
-        .filter((g) => g.exam === Number(examId) && (!editingGrade || g.id !== editingGrade.id))
-        .map((g) => g.student)
-    )
   }
 
   /* ── render ───────────────────────────────────────────────────── */
@@ -375,16 +375,21 @@ export function AdminExamsPage() {
 
                 <div className="exam-form-row">
                   <div className="exam-form-col">
-                    <label className="login-label" htmlFor="exam-class">
-                      Class <span className="field-optional">(optional)</span>
+                    <label className="login-label" htmlFor="exam-grade">
+                      Grade
                     </label>
-                    <input
-                      id="exam-class"
+                    <select
+                      id="exam-grade"
                       className="login-input login-input--plain"
-                      placeholder="e.g. G10-A"
-                      value={examForm.class_id}
-                      onChange={(e) => setField('class_id', e.target.value)}
-                    />
+                      value={examForm.grade}
+                      onChange={(e) => setField('grade', e.target.value)}
+                      required
+                    >
+                      <option value="">Select grade…</option>
+                      {gradeOptions.map((g) => (
+                        <option key={g.value} value={g.value}>{g.label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="exam-form-col">
                     <label className="login-label" htmlFor="exam-total-grade">Total Grade</label>
@@ -467,7 +472,7 @@ export function AdminExamsPage() {
                       <th>Type</th>
                       <th>Subject</th>
                       <th>Teacher</th>
-                      <th>Class</th>
+                      <th>Grade</th>
                       <th>Total Grade</th>
                       <th>Date</th>
                       <th>Duration</th>
@@ -503,9 +508,9 @@ export function AdminExamsPage() {
                             ) : '—'}
                           </td>
                           <td>
-                            {exam.class_id ? (
-                              <span className="badge badge-class">{exam.class_id}</span>
-                            ) : <span className="muted">All</span>}
+                            {exam.grade_name || exam.grade ? (
+                              <span className="badge badge-class">{exam.grade_name || exam.grade}</span>
+                            ) : <span className="muted">—</span>}
                           </td>
                           <td>{exam.total_grade ?? '—'}</td>
                           <td>{exam.exam_date || <span className="muted">—</span>}</td>
@@ -553,78 +558,6 @@ export function AdminExamsPage() {
       {/* ════════════════ GRADES TAB ════════════════ */}
       {activeTab === 'grades' && !loading && !error && (
         <>
-          <div className="admin-form-container">
-            {/* ── Create / Edit Grade Card ── */}
-            <Card title={editingGrade ? 'Edit Grade' : 'Record Grade'}>
-              <form className="teaching-form" onSubmit={saveGrade}>
-                <label className="login-label" htmlFor="grade-exam">Assessment</label>
-                <select
-                  id="grade-exam"
-                  className="login-input login-input--plain teaching-input-wide"
-                  value={gradeExamId}
-                  onChange={(e) => { setGradeExamId(e.target.value); setGradeStudentId('') }}
-                  required
-                  disabled={!!editingGrade}
-                >
-                  <option value="">Select assessment…</option>
-                  {exams.map((ex) => {
-                    const sub = subjectById.get(ex.subject)
-                    return (
-                      <option key={ex.id} value={ex.id}>
-                        {ex.name}{sub ? ` (${sub.code})` : ''}{ex.class_id ? ` — ${ex.class_id}` : ''}
-                      </option>
-                    )
-                  })}
-                </select>
-
-                <label className="login-label" htmlFor="grade-student">Student</label>
-                <select
-                  id="grade-student"
-                  className="login-input login-input--plain teaching-input-wide"
-                  value={gradeStudentId}
-                  onChange={(e) => setGradeStudentId(e.target.value)}
-                  required
-                  disabled={!!editingGrade}
-                >
-                  <option value="">Select student…</option>
-                  {students.map((st) => {
-                    const u = userById.get(st.user)
-                    const alreadyGraded = gradeExamId && gradedStudentIds(gradeExamId).has(st.id)
-                    return (
-                      <option key={st.id} value={st.id} disabled={alreadyGraded}>
-                        {st.student_id} — {fullName(u)}{alreadyGraded ? ' (already graded)' : ''}
-                      </option>
-                    )
-                  })}
-                </select>
-
-                <label className="login-label" htmlFor="grade-score">Score</label>
-                <input
-                  id="grade-score"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="login-input login-input--plain teaching-input-wide"
-                  placeholder="e.g. 85"
-                  value={gradeScore}
-                  onChange={(e) => setGradeScore(e.target.value)}
-                  required
-                />
-
-                <div className="feature-actions">
-                  <button type="submit" className="btn btn-primary" disabled={busy}>
-                    {editingGrade ? 'Save Grade' : 'Record Grade'}
-                  </button>
-                  {editingGrade && (
-                    <button type="button" className="btn btn-ghost" disabled={busy} onClick={cancelEditGrade}>
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </form>
-            </Card>
-
-          </div>
 
           {/* Grades table */}
           {!loading && !error && (
@@ -654,7 +587,7 @@ export function AdminExamsPage() {
                       <th>Student ID</th>
                       <th>Exam</th>
                       <th>Subject</th>
-                      <th>Class</th>
+                      <th>Grade</th>
                       <th>Score</th>
                       <th>%</th>
                       <th>Grade</th>
@@ -678,8 +611,8 @@ export function AdminExamsPage() {
                             {sub ? <span className="subject-code-badge">{sub.code}</span> : '—'}
                           </td>
                           <td>
-                            {ex?.class_id ? (
-                              <span className="badge badge-class">{ex.class_id}</span>
+                            {ex?.grade_name || ex?.grade ? (
+                              <span className="badge badge-class">{ex?.grade_name || ex?.grade}</span>
                             ) : <span className="muted">—</span>}
                           </td>
                           <td><strong>{g.score}</strong></td>
@@ -695,13 +628,6 @@ export function AdminExamsPage() {
                           </td>
                           <td>
                             <div className="table-actions">
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-xs"
-                                onClick={() => startEditGrade(g)}
-                              >
-                                Edit
-                              </button>
                               <button
                                 type="button"
                                 className="btn btn-primary btn-xs"

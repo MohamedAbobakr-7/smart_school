@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from classes.models import SchoolClass
 from .models import Subject, Material
 
 
@@ -48,6 +49,13 @@ class MaterialSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     subject_name = serializers.CharField(source='subject.name', read_only=True)
     uploaded_by_name = serializers.CharField(source='uploaded_by.user.get_full_name', read_only=True)
+    target_classes = serializers.PrimaryKeyRelatedField(
+        queryset=SchoolClass.objects.all(),
+        many=True,
+        required=False,
+        write_only=False,
+    )
+    target_classes_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Material
@@ -55,10 +63,17 @@ class MaterialSerializer(serializers.ModelSerializer):
             'id', 'title', 'title_en', 'title_ar',
             'description', 'description_en', 'description_ar',
             'subject', 'subject_name',
+            'target_classes', 'target_classes_display',
             'uploaded_by', 'uploaded_by_name', 'file', 'file_url',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'uploaded_by']
+
+    def get_target_classes_display(self, obj):
+        return [
+            {"id": c.id, "name": c.display_name}
+            for c in obj.target_classes.all()
+        ]
 
     def get_file_url(self, obj):
         if obj.file and hasattr(obj.file, 'url'):

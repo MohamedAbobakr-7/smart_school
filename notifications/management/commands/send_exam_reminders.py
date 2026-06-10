@@ -1,7 +1,8 @@
 """
 Management command: send_exam_reminders
 
-Sends exam reminder notifications to students, teachers, and admins for upcoming exams.
+Sends exam reminder notifications to students, parents, teachers, and admins
+for upcoming exams at 7 days, 3 days, and 1 day before the exam date.
 
 Usage:
     python manage.py send_exam_reminders
@@ -28,15 +29,15 @@ from users.models import User
 
 
 class Command(BaseCommand):
-    help = "Send exam reminder notifications for exams N days ahead (default: 1 and 3 days)."
+    help = "Send exam reminder notifications for exams N days ahead (default: 1, 3, and 7 days)."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--days",
             nargs="+",
             type=int,
-            default=[1, 3],
-            help="How many days ahead to look for exams (default: 1 3).",
+            default=[1, 3, 7],
+            help="How many days ahead to look for exams (default: 1 3 7).",
         )
 
     def handle(self, *args, **options):
@@ -58,7 +59,7 @@ class Command(BaseCommand):
                 exam_label = f"{exam.name} ({exam.subject.name})"
                 exam_date_str = exam.exam_date.isoformat()
 
-                # ── Students enrolled in the exam's class (via class_id string) ──
+                # ── Students enrolled in the exam's class ────────────────────
                 student_qs = self._get_students_for_exam(exam)
                 for student in student_qs:
                     dk = f"examreminder_{exam.id}_days{days_ahead}_student_{student.id}"
@@ -82,6 +83,7 @@ class Command(BaseCommand):
                             "days_ahead": days_ahead,
                         },
                         dedupe_key=dk,
+                        student=student,
                     )
                     if n and n.pk:
                         total_sent += 1
@@ -112,6 +114,7 @@ class Command(BaseCommand):
                                 "student_id": student.student_id,
                             },
                             dedupe_key=dk_parent,
+                            student=student,
                         )
                         if np and np.pk:
                             total_sent += 1
@@ -182,20 +185,37 @@ class Command(BaseCommand):
     def _get_students_for_exam(self, exam: Exam):
         """
         Return students relevant to this exam.
-        Uses class_id string on Exam to find students with matching class_id,
-        or falls back to all students enrolled in the exam's subject.
+        Uses grade (CharField, e.g. '5', 'KG') on Exam to find students
+        in matching SchoolClass(es), or falls back to all students enrolled
+        in the exam's subject.
         """
         from students.models import Student
+        from classes.models import SchoolClass
 
-        if exam.class_id:
-            # Match students by the string class_id on their profile
-            qs = Student.objects.filter(
-                class_id=exam.class_id
-            ).select_related("user", "parent__user")
+        if exam.grade:
+            # Find SchoolClass(es) whose name matches the grade level
+            grade_val = exam.grade
+            if grade_val == 'KG':
+                matching_classes = SchoolClass.objects.filter(name__icontains='kg')
+            else:
+                matching_classes = (
+                    SchoolClass.objects.filter(name__icontains=f'Grade {grade_val}')
+                    | SchoolClass.objects.filter(name__icontains=grade_val)
+                )
+            class_pks = matching_classes.values_list('id', flat=True)
+            if class_pks:
+                qs = Student.objects.filter(
+                    school_class_id__in=class_pks
+                ).select_related("user", "parent__user", "school_class")
+            else:
+                # No matching classes found, fallback to subject enrollment
+                qs = Student.objects.filter(
+                    subjects=exam.subject
+                ).select_related("user", "parent__user", "school_class")
         else:
             # Fallback: all students enrolled in the subject
             qs = Student.objects.filter(
                 subjects=exam.subject
-            ).select_related("user", "parent__user")
+            ).select_related("user", "parent__user", "school_class")
 
         return qs

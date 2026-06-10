@@ -114,3 +114,69 @@ def backfill_student_ids():
         student.save(update_fields=['student_id'])
         updated += 1
     return updated
+
+
+# ── Grade-based subject enrollment ──────────────────────────────────
+
+# Subject names that should be auto-enrolled for grades 1-3
+# (core subjects only — no Science or Social Studies)
+SUBJECTS_GRADES_1_3 = [
+    'Arabic Language',
+    'English Language',
+    'Mathematics',
+    'Computer Science',
+    'Religion',
+]
+
+# Subject names that should be auto-enrolled for grades 4-6
+# (all available subjects)
+SUBJECTS_GRADES_4_6 = [
+    'Arabic Language',
+    'English Language',
+    'Mathematics',
+    'Computer Science',
+    'Religion',
+    'Science',
+    'Social Studies',
+]
+
+
+def get_subjects_for_grade(grade_number):
+    """
+    Return a Subject queryset containing the subjects that should be
+    auto-enrolled for the given grade number.
+
+    Rules:
+      - Grades 1-3  → core subjects only (no Science, Social Studies)
+      - Grades 4-6  → all subjects
+      - Grade > 6   → all subjects (safe default for higher grades)
+      - None        → empty queryset (no class assigned)
+    """
+    from subjects.models import Subject
+    from django.db.models import Q
+
+    if grade_number is None:
+        return Subject.objects.none()
+
+    if 1 <= grade_number <= 3:
+        names = SUBJECTS_GRADES_1_3
+    elif grade_number <= 6:
+        names = SUBJECTS_GRADES_4_6
+    else:
+        # Grades beyond 6: enroll in all available subjects
+        return Subject.objects.all()
+
+    # Use case-insensitive exact matching (iexact via Q objects)
+    # so "Science" does NOT accidentally match "Computer Science"
+    q = Q()
+    for name in names:
+        q |= Q(name__iexact=name)
+    return Subject.objects.filter(q)
+
+
+def get_subject_ids_for_grade(grade_number):
+    """
+    Return a list of subject PKs for the given grade number.
+    Convenience wrapper around get_subjects_for_grade().
+    """
+    return list(get_subjects_for_grade(grade_number).values_list('id', flat=True))

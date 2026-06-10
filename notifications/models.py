@@ -7,8 +7,9 @@ class Notification(models.Model):
     """In-app notification with typed payload for smart school alerts."""
 
     class Type(models.TextChoices):
-        LOW_GRADE = "LOW_GRADE", _("Low Grade")
         ATTENDANCE = "ATTENDANCE", _("Attendance")
+        LOW_GRADE = "LOW_GRADE", _("Low Grade")
+        AT_RISK = "AT_RISK", _("At-Risk Student")
         EXAM_REMINDER = "EXAM_REMINDER", _("Exam Reminder")
         NEW_STUDENT_REPORT = "NEW_STUDENT_REPORT", _("New Student Report")
         NEW_WEEKLY_REPORT = "NEW_WEEKLY_REPORT", _("New Weekly Report")
@@ -34,6 +35,14 @@ class Notification(models.Model):
         db_index=True,
         help_text="Optional key to avoid duplicate alerts (e.g. same absence day).",
     )
+    student = models.ForeignKey(
+        "students.Student",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications",
+        help_text="Student related to this notification (enables role-based filtering).",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -42,6 +51,7 @@ class Notification(models.Model):
         indexes = [
             models.Index(fields=["recipient", "-created_at"]),
             models.Index(fields=["recipient", "read_at"]),
+            models.Index(fields=["student", "-created_at"]),
         ]
 
     def __str__(self):
@@ -60,11 +70,13 @@ class NotificationPreference(models.Model):
         on_delete=models.CASCADE,
         related_name="notification_preferences",
     )
-    allow_low_grade = models.BooleanField(default=True)
     allow_attendance = models.BooleanField(default=True)
+    allow_low_grade = models.BooleanField(default=True)
+    allow_at_risk = models.BooleanField(default=True)
+    allow_exam_reminder = models.BooleanField(default=True)
     allow_student_report = models.BooleanField(default=True)
     allow_weekly_report = models.BooleanField(default=True)
-    allow_exam_reminder = models.BooleanField(default=True)
+    allow_system = models.BooleanField(default=True)
 
     updated_at = models.DateTimeField(auto_now=True)
 

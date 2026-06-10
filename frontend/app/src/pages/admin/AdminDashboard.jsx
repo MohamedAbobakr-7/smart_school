@@ -166,8 +166,8 @@ export function AdminDashboard() {
               {loading ? <ChartSkeleton /> : weekEmpty ? (
                 <ChartEmpty icon="📅" text="No attendance records this week" />
               ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <AreaChart data={weekAtt} margin={{ top: 12, right: 12, left: -8, bottom: 0 }}>
+                <ResponsiveContainer width="100%" height={320}>
+                  <AreaChart data={weekAtt} margin={{ top: 20, right: 30, left: 10, bottom: 50 }}>
                     <defs>
                       <linearGradient id="adminPresentFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%"   stopColor="#4f46e5" stopOpacity={0.3} />
@@ -179,8 +179,8 @@ export function AdminDashboard() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--dash-chart-grid, #e2e8f0)" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={36} allowDecimals={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={50} tickMargin={12} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
                     <Tooltip content={(props) => <ChartTooltip {...props} />} />
                     <Legend iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '12px' }} />
                     <Area type="monotone" dataKey="present" name="Present" stroke="#4f46e5" strokeWidth={2.5} fill="url(#adminPresentFill)" dot={{ fill: '#4f46e5', r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
@@ -198,11 +198,11 @@ export function AdminDashboard() {
               {loading ? <ChartSkeleton /> : subjEmpty ? (
                 <ChartEmpty icon="📚" text="No grades recorded yet" />
               ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={subjScores} margin={{ top: 12, right: 12, left: -8, bottom: 0 }} barCategoryGap="18%">
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={subjScores} margin={{ top: 20, right: 30, left: 10, bottom: 70 }} barCategoryGap="18%">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--dash-chart-grid, #e2e8f0)" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={36} allowDecimals={false} domain={[0, 100]} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} angle={-40} textAnchor="end" height={70} tickMargin={18} interval={0} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={40} allowDecimals={false} domain={[0, 100]} />
                     <Tooltip content={(props) => <ChartTooltip {...props} />} cursor={{ fill: 'rgba(99,102,241,0.08)' }} />
                     <Bar dataKey="value" name="Avg %" fill="#7c3aed" radius={[8, 8, 0, 0]} maxBarSize={52} />
                   </BarChart>

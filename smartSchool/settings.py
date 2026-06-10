@@ -73,7 +73,12 @@ CHANNEL_LAYERS = {
 }
 
 # Alert when exam percentage is below this value (student + parent).
-NOTIFICATION_LOW_GRADE_PERCENT = float(os.getenv('NOTIFICATION_LOW_GRADE_PERCENT', '60'))
+NOTIFICATION_LOW_GRADE_PERCENT = float(os.getenv('NOTIFICATION_LOW_GRADE_PERCENT', '50'))
+
+# At-Risk Student Detection thresholds
+NOTIFICATION_AT_RISK_ABSENCE_THRESHOLD = int(os.getenv('NOTIFICATION_AT_RISK_ABSENCE_THRESHOLD', '3'))
+NOTIFICATION_AT_RISK_ABSENCE_WINDOW_DAYS = int(os.getenv('NOTIFICATION_AT_RISK_ABSENCE_WINDOW_DAYS', '30'))
+NOTIFICATION_AT_RISK_GRADE_PERCENT = float(os.getenv('NOTIFICATION_AT_RISK_GRADE_PERCENT', '50'))
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

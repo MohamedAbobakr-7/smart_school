@@ -138,22 +138,30 @@ class SubjectViewSet(viewsets.ModelViewSet):
 class MaterialViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Material management.
-    - List/Retrieve: Authenticated users (Students see materials for their subjects, Teachers see theirs)
+    - List/Retrieve: Authenticated users (Students see materials for their subjects & class, Teachers see theirs)
     - Create/Update/Delete: ADMIN, TEACHER only
+    - Teachers must select at least one target class when uploading.
     """
     serializer_class = MaterialSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        qs = Material.objects.all().select_related('subject', 'uploaded_by', 'uploaded_by__user')
+        qs = Material.objects.all().select_related('subject', 'uploaded_by', 'uploaded_by__user').prefetch_related('target_classes')
         
+        # Optional query-param filter by class
+        school_class = self.request.query_params.get('class') or self.request.query_params.get('school_class')
+        if school_class:
+            qs = qs.filter(target_classes__id=school_class)
+
         # Filter by role
         if user.role == 'STUDENT' and hasattr(user, 'student_profile'):
             student = user.student_profile
-            # Students can only see materials for subjects they are enrolled in
+            # Students can only see materials for subjects they are enrolled in AND their class
             enrolled_subject_ids = student.subjects.values_list('id', flat=True)
             qs = qs.filter(subject_id__in=enrolled_subject_ids)
+            if student.school_class:
+                qs = qs.filter(target_classes=student.school_class)
             
         elif user.role == 'TEACHER' and hasattr(user, 'teacher_profile'):
             teacher = user.teacher_profile
@@ -162,10 +170,12 @@ class MaterialViewSet(viewsets.ModelViewSet):
             qs = qs.filter(subject_id__in=teacher_subject_ids)
             
         elif user.role == 'PARENT' and hasattr(user, 'parent_profile'):
-            # Parents can see materials for their children's subjects
+            # Parents can see materials for their children's subjects & classes
+            from students.models import Student
             parent = user.parent_profile
+            child_class_ids = Student.objects.filter(parent=parent, school_class__isnull=False).values_list('school_class_id', flat=True)
             child_subject_ids = parent.children.values_list('subjects__id', flat=True)
-            qs = qs.filter(subject_id__in=child_subject_ids)
+            qs = qs.filter(subject_id__in=child_subject_ids, target_classes__id__in=list(child_class_ids))
             
         return qs.distinct()
 

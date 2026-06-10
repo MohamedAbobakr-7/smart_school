@@ -251,14 +251,14 @@ export function StudentWeeklyReportsPage() {
               {attendanceChartData.length === 0 ? (
                 <p className="muted" style={{ margin: 0 }}>No attendance data for this week.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={attendanceChartData}>
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={attendanceChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={60} tickMargin={15} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="Present" fill="#10b981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Absent" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Present" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                    <Bar dataKey="Absent" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={48} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -269,15 +269,19 @@ export function StudentWeeklyReportsPage() {
               {subjectChartData.length === 0 ? (
                 <p className="muted" style={{ margin: 0 }}>No graded subjects for this week.</p>
               ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={subjectChartData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
-                    <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="weekly-chart-scroll">
+                  <div style={{ height: Math.max(350, subjectChartData.length * 40), minWidth: '100%', width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={subjectChartData} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
+                        <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} interval={0} />
+                        <Tooltip content={<ChartTooltip />} />
+                        <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={36} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               )}
             </Card>
           </div>

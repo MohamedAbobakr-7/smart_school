@@ -59,6 +59,7 @@ class ExamSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source='teacher.user.get_full_name', read_only=True)
     teacher_id_display = serializers.CharField(source='teacher.teacher_id', read_only=True)
     exam_type_display = serializers.CharField(source='get_exam_type_display', read_only=True)
+    grade_name = serializers.CharField(source='get_grade_display', read_only=True)
     questions_count = serializers.SerializerMethodField()
     grades_count = serializers.SerializerMethodField()
     
@@ -69,7 +70,9 @@ class ExamSerializer(serializers.ModelSerializer):
             'exam_type', 'exam_type_display',
             'subject', 'subject_name', 'subject_code',
             'teacher', 'teacher_name', 'teacher_id_display',
-            'total_grade', 'duration', 'exam_date', 'class_id',
+            'grade', 'grade_name',
+            'school_class',
+            'total_grade', 'duration', 'exam_date',
             'questions_count', 'grades_count',
             'created_at', 'updated_at'
         ]
@@ -100,6 +103,7 @@ class GradeSerializer(serializers.ModelSerializer):
     student_id = serializers.CharField(source='student.student_id', read_only=True)
     exam_name = serializers.CharField(source='exam.name', read_only=True)
     subject_name = serializers.CharField(source='exam.subject.name', read_only=True)
+    grade_name = serializers.CharField(source='exam.get_grade_display', read_only=True, default='')
     percentage = serializers.SerializerMethodField()
     grade_letter = serializers.SerializerMethodField()
     total_questions = serializers.SerializerMethodField()
@@ -109,7 +113,7 @@ class GradeSerializer(serializers.ModelSerializer):
         model = Grade
         fields = [
             'id', 'student', 'student_id', 'student_name',
-            'exam', 'exam_name', 'subject_name',
+            'exam', 'exam_name', 'subject_name', 'grade_name',
             'score', 'percentage', 'grade_letter', 'total_questions', 'total_grade',
             'created_at', 'updated_at'
         ]

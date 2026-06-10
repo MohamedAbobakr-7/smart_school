@@ -6,6 +6,56 @@ import { apiFetch, apiFetchAll } from '../../lib/api'
 import { useAuthStore } from '../../stores/authStore'
 import { useTeacherProfile } from '../../hooks/useTeacherProfile'
 
+/**
+ * Extract a grade-level string from a SchoolClass name.
+ * Handles patterns like "Grade 5", "Grade 5 - A", "G5", "G5-A",
+ * "Kindergarten", "KG", "KG-A", "Year 10", "Year 10 - B".
+ * Returns a human-readable label like "Grade 5", "Kindergarten", "Year 10"
+ * or null if no grade pattern is found.
+ */
+function extractGradeLabel(className) {
+  if (!className) return null
+  const name = className.trim()
+
+  // Kindergarten patterns
+  if (/\bKG\b|\bKindergarten\b/i.test(name)) {
+    return 'Kindergarten'
+  }
+
+  // "Grade N" or "G N" patterns
+  const gradeMatch = name.match(/\b(?:Grade|G)\s*(\d{1,2})\b/i)
+  if (gradeMatch) {
+    return `Grade ${gradeMatch[1]}`
+  }
+
+  // "Year N" pattern
+  const yearMatch = name.match(/\bYear\s*(\d{1,2})\b/i)
+  if (yearMatch) {
+    return `Year ${yearMatch[1]}`
+  }
+
+  return null
+}
+
+/**
+ * Extract a grade-level VALUE (matching Exam.GRADE_CHOICES) from a class name.
+ * Returns 'KG', '1'–'12', or '' if no match.
+ */
+function extractGradeValue(className) {
+  if (!className) return ''
+  const name = className.trim()
+
+  if (/\bKG\b|\bKindergarten\b/i.test(name)) return 'KG'
+
+  const m = name.match(/\b(?:Grade|G)\s*(\d{1,2})\b/i)
+  if (m) return m[1]
+
+  const ym = name.match(/\bYear\s*(\d{1,2})\b/i)
+  if (ym) return ym[1]
+
+  return ''
+}
+
 function parseList(payload) {
   if (Array.isArray(payload)) return payload
   if (payload?.results && Array.isArray(payload.results)) return payload.results
@@ -36,6 +86,7 @@ export function TeacherExamsPage() {
   const [examName, setExamName] = useState('')
   const [examType, setExamType] = useState('quiz')
   const [examSubject, setExamSubject] = useState('')
+  const [examGrade, setExamGrade] = useState('')
   const [examTotalGrade, setExamTotalGrade] = useState(100)
   const [examDuration, setExamDuration] = useState(60)
 
@@ -84,6 +135,28 @@ export function TeacherExamsPage() {
     return allSubjects.filter((s) => mySubjectIds.includes(Number(s.id)))
   }, [allSubjects, mySubjectIds])
 
+  // Grade levels derived from the teacher's assigned classes in the system
+  // Extracts unique grade levels (e.g. "Grade 5" from "Grade 5 - A" and "Grade 5 - B")
+  const gradeOptions = useMemo(() => {
+    if (myClassObjects.length === 0) return []
+    const seen = new Map() // gradeValue -> label
+    for (const c of myClassObjects) {
+      const val = extractGradeValue(c.name)
+      const label = extractGradeLabel(c.name)
+      if (val && label && !seen.has(val)) {
+        seen.set(val, label)
+      }
+    }
+    return Array.from(seen.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => {
+        // Sort: KG first, then numeric grades ascending
+        if (a.value === 'KG') return -1
+        if (b.value === 'KG') return 1
+        return Number(a.value) - Number(b.value)
+      })
+  }, [myClassObjects])
+
   // Only this teacher's exams
   const myExams = useMemo(() => {
     if (!teacherId) return []
@@ -114,12 +187,14 @@ export function TeacherExamsPage() {
     e.preventDefault()
     setMsg('')
     if (!teacherId) return
-    if (!examName.trim() || !examSubject) {
-      setMsg('Name and subject are required.')
+    if (!examName.trim() || !examSubject || !examGrade) {
+      setMsg('Name, subject and grade are required.')
       return
     }
     setBusy(true)
     try {
+      // Find a matching school_class for the selected grade level
+      const matchingClass = myClassObjects.find((c) => extractGradeValue(c.name) === examGrade)
       const res = await apiFetch('/exams/', {
         method: 'POST',
         body: {
@@ -127,6 +202,8 @@ export function TeacherExamsPage() {
           exam_type: examType,
           subject: Number(examSubject),
           teacher: teacherId,
+          grade: examGrade,
+          school_class: matchingClass ? Number(matchingClass.id) : null,
           total_grade: Math.max(1, Number(examTotalGrade) || 100),
           duration: Math.max(1, Number(examDuration) || 60),
         },
@@ -136,6 +213,7 @@ export function TeacherExamsPage() {
       setMsg(`Assessment created (id ${data.id}).`)
       setExamName('')
       setExamType('quiz')
+      setExamGrade('')
       await refreshData()
     } catch (err) {
       setMsg(typeof err.message === 'string' ? err.message : 'Create assessment failed')
@@ -319,6 +397,24 @@ export function TeacherExamsPage() {
                   ))
               }
             </select>
+            <label className="login-label" htmlFor="te-exam-grade">
+              Grade
+            </label>
+            <select
+              id="te-exam-grade"
+              className="login-input login-input--plain teaching-input-wide"
+              value={examGrade}
+              onChange={(e) => setExamGrade(e.target.value)}
+              required
+            >
+              <option value="">Select grade…</option>
+              {gradeOptions.length === 0
+                ? <option disabled>No grades found in your assigned classes</option>
+                : gradeOptions.map((g) => (
+                    <option key={g.value} value={g.value}>{g.label}</option>
+                  ))
+              }
+            </select>
             <label className="login-label" htmlFor="te-exam-total-grade">
               Total Grade
             </label>
@@ -374,7 +470,7 @@ export function TeacherExamsPage() {
               </div>
 
               <div style={{ flex: '1 1 200px' }}>
-                <label className="login-label" htmlFor="te-b-class">Class</label>
+                <label className="login-label" htmlFor="te-b-class">Grade</label>
                 <select
                   id="te-b-class"
                   className="login-input login-input--plain teaching-input-wide"
@@ -401,9 +497,15 @@ export function TeacherExamsPage() {
                 >
                   <option value="">Select assessment…</option>
                   {myExams
-                    .filter((x) => !bSubject || x.subject === Number(bSubject))
+                    .filter((x) => {
+                      const matchSubject = !bSubject || x.subject === Number(bSubject)
+                      const matchClass = !bClass || x.school_class === Number(bClass)
+                      return matchSubject && matchClass
+                    })
                     .map((x) => (
-                      <option key={x.id} value={x.id}>{x.name} ({x.exam_type_display})</option>
+                      <option key={x.id} value={x.id}>
+                        {x.name} ({x.exam_type_display}){x.grade_name || x.grade ? ` — ${x.grade_name || x.grade}` : ''}
+                      </option>
                     ))}
                 </select>
               </div>
@@ -497,7 +599,7 @@ export function TeacherExamsPage() {
               )
             ) : (
               <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-muted)', borderRadius: 'var(--radius)' }}>
-                <p className="muted">Please select a Subject, Class, and Exam to enter grades.</p>
+                <p className="muted">Please select a Subject, Grade, and Exam to enter grades.</p>
               </div>
             )}
           </div>

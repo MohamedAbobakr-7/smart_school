@@ -16,6 +16,7 @@ from smartSchool.messages import (
 from users.permissions import IsAdmin, IsAdminOrTeacher
 from .models import Student
 from .serializers import StudentSerializer
+from .utils import _extract_grade_number, get_subjects_for_grade, get_subject_ids_for_grade
 
 logger = logging.getLogger(__name__)
 
@@ -537,6 +538,53 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'face_registered': False,
                 'photo_url': request.build_absolute_uri(student.photo.url),
             }, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='subjects-for-class',
+        url_name='subjects-for-class',
+        permission_classes=[IsAuthenticated],
+    )
+    def subjects_for_class(self, request):
+        """
+        GET /api/students/subjects-for-class/?class_id=<id>
+
+        Returns the list of subject IDs and names that should be
+        auto-enrolled for the grade level of the given class.
+        Used by the frontend to auto-populate subject checkboxes.
+        """
+        from classes.models import SchoolClass
+
+        class_id = request.query_params.get('class_id')
+        if not class_id:
+            return Response(
+                {'detail': 'class_id query parameter is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            school_class = SchoolClass.objects.get(pk=class_id)
+        except SchoolClass.DoesNotExist:
+            return Response(
+                {'detail': f'SchoolClass with id={class_id} does not exist.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        grade_number = _extract_grade_number(school_class)
+        subjects_qs = get_subjects_for_grade(grade_number)
+
+        subject_list = [
+            {'id': s.id, 'name': s.name, 'code': s.code}
+            for s in subjects_qs
+        ]
+
+        return Response({
+            'class_id': school_class.id,
+            'class_name': school_class.display_name,
+            'grade_number': grade_number,
+            'subjects': subject_list,
+        })
 
     @action(detail=True, methods=['get'], url_path='face-status')
     def face_status(self, request, pk=None):

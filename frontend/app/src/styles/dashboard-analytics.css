@@ -154,7 +154,34 @@
 
 .dash-chart-inner {
   width: 100%;
-  min-height: 280px;
+  min-height: 320px;
+}
+
+/* ── Scrollable chart container for weekly reports ──────────────── */
+.weekly-chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #c7d2fe transparent;
+}
+
+.weekly-chart-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.weekly-chart-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.weekly-chart-scroll::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 3px;
+}
+
+.weekly-chart-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a5b4fc;
 }
 
 .dash-chart-tooltip {

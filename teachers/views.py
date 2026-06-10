@@ -25,20 +25,28 @@ def teacher_class_visibility_sets(teacher):
         .values_list('school_class_id', flat=True)
         .distinct()
     )
-    exam_class_ids = set(
+    # Grade is now a CharField (e.g. '5', 'KG'), so find matching SchoolClass PKs
+    exam_grade_levels = set(
         Exam.objects
         .filter(teacher=teacher)
-        .exclude(class_id='')
         .order_by()
-        .values_list('class_id', flat=True)
+        .values_list('grade', flat=True)
         .distinct()
     )
+    from classes.models import SchoolClass
+    exam_grade_pks = set()
+    for gl in exam_grade_levels:
+        if gl == 'KG':
+            matching = SchoolClass.objects.filter(name__icontains='kg')
+        else:
+            matching = SchoolClass.objects.filter(name__icontains=f'Grade {gl}') | SchoolClass.objects.filter(name__icontains=gl)
+        exam_grade_pks.update(matching.values_list('id', flat=True))
     assigned_pks = set(teacher.assigned_classes.values_list('id', flat=True))
     junction_ids = set(
         teacher.subject_class_relations.order_by().values_list('class_id', flat=True).distinct()
     )
-    all_class_pks = session_class_pks | assigned_pks
-    all_string_class_ids = exam_class_ids | junction_ids
+    all_class_pks = session_class_pks | assigned_pks | exam_grade_pks
+    all_string_class_ids = junction_ids
     return all_class_pks, all_string_class_ids
 
 
@@ -249,7 +257,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
                     'exam_type': e.exam_type,
                     'exam_type_display': e.get_exam_type_display(),
                     'subject_name': e.subject.name,
-                    'class_id': e.class_id,
+                    'grade': e.grade,
+                    'grade_name': e.get_grade_display(),
                     'grades_count': e.grades.count(),
                     'created_at': e.created_at.isoformat(),
                 }

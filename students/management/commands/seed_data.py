@@ -10,6 +10,7 @@ Management Command: seed_data.py
 """
 
 import random
+import itertools
 from django.core.management.base import BaseCommand
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
@@ -60,15 +61,33 @@ SUBJECTS_DATA = [
     ("Arabic Language",  "ARB101"),
     ("English Language", "ENG101"),
     ("Science",          "SCI101"),
-    ("Physics",          "PHY201"),
-    ("Chemistry",        "CHM201"),
-    ("Biology",          "BIO201"),
-    ("History",          "HIS101"),
-    ("Geography",        "GEO101"),
+    ("Social Studies",   "SOC101"),
     ("Computer Science", "CS101"),
+    ("Religion",         "REL101"),
 ]
 
-GRADES   = [f"Grade {i}" for i in range(1, 13)]
+# ─── Specialization Mapping ──────────────────────────────────────────────────
+# Maps subject code to teacher specialization. Each teacher teaches only
+# the subject matching their specialization — no random assignment.
+TEACHER_SPECIALIZATIONS = {
+    "ARB101": "Arabic",
+    "ENG101": "English",
+    "MATH101": "Math",
+    "SCI101": "Science",
+    "CS101":  "Computer",
+    "REL101": "Religion",
+    "SOC101": "Social",
+}
+
+GRADES = [
+    "Grade 1",
+    "Grade 2",
+    "Grade 3",
+    "Grade 4",
+    "Grade 5",
+    "Grade 6",
+]
+
 SECTIONS = ["A", "B", "C"]
 
 OCCUPATIONS = ["Engineer", "Doctor", "Accountant", "Teacher",
@@ -84,7 +103,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--students", type=int, default=200)
-        parser.add_argument("--teachers", type=int, default=50)
+        parser.add_argument("--teachers", type=int, default=18)
         parser.add_argument("--parents",  type=int, default=50)
         parser.add_argument("--clear",    action="store_true")
 
@@ -141,50 +160,86 @@ class Command(BaseCommand):
 
     # ── TEACHERS ──────────────────────────────────────────────────────────────
     def _seed_teachers(self, count, subjects, classes):
-        self.stdout.write(f"إنشاء {count} معلم...")
+        self.stdout.write(f"إنشاء {count} معلم (حسب التخصص)...")
         teachers = []
         used_usernames = set()
 
-        for _ in range(count):
-            first = random.choice(TEACHER_FIRST_NAMES)
-            last  = random.choice(TEACHER_LAST_NAMES)
+        # Generate unique first+last name combos so no two teachers share
+        # the same display name (avoids confusion on the frontend)
+        all_name_combos = list(itertools.product(TEACHER_FIRST_NAMES, TEACHER_LAST_NAMES))
+        random.shuffle(all_name_combos)
+        name_iter = iter(all_name_combos)
 
-            username = self._unique_username(
-                f"{first.lower()}.{last.lower()}", used_usernames
-            )
+        # Build subject code → Subject object lookup
+        subject_by_code = {s.code: s for s in subjects}
 
-            user = User.objects.create(
-                username     = username,
-                email        = fake_en.unique.email(),
-                first_name   = first,
-                last_name    = last,
-                password     = DEFAULT_PASSWORD,
-                role         = User.Role.TEACHER,
-                phone_number = random_phone(),
-                address      = fake_en.address(),
-                is_active    = True,
-            )
+        # Distribute teachers across specializations, ensuring ≥2 per subject
+        spec_codes = list(TEACHER_SPECIALIZATIONS.keys())
+        min_per_subject = 2
+        base_total = min_per_subject * len(spec_codes)
+        if count < base_total:
+            count = base_total  # guarantee every subject has teachers
 
-            teacher = Teacher.objects.create(
-                user       = user,
-                teacher_id = str(Teacher.objects.count() + 1),
-                hire_date  = fake_en.date_between(start_date="-10y", end_date="today"),
-            )
+        remainder = count - base_total
+        per_subject = {}
+        for i, code in enumerate(spec_codes):
+            per_subject[code] = min_per_subject + (1 if i < remainder else 0)
 
-            assigned_subj = random.sample(subjects, k=random.randint(2, 4))
-            teacher.assigned_subjects.set(assigned_subj)
+        for code, num in per_subject.items():
+            subject_obj = subject_by_code.get(code)
+            if subject_obj is None:
+                continue
 
-            assigned_cls = random.sample(classes, k=random.randint(2, 4))
-            teacher.assigned_classes.set(assigned_cls)
+            # Divide classes evenly among teachers for this subject
+            # so every class has a teacher for every subject
+            class_chunks = [[] for _ in range(num)]
+            for idx, cls in enumerate(classes):
+                class_chunks[idx % num].append(cls)
 
-            for subj in assigned_subj:
-                for cls in assigned_cls[:2]:
+            for j in range(num):
+                # Use unique name combinations to avoid duplicate display names
+                # across different teachers (so no "same teacher" appears under
+                # two different subjects on the frontend)
+                first, last = next(name_iter)
+
+                username = self._unique_username(
+                    f"{first.lower()}.{last.lower()}", used_usernames
+                )
+
+                user = User.objects.create(
+                    username     = username,
+                    email        = fake_en.unique.email(),
+                    first_name   = first,
+                    last_name    = last,
+                    password     = DEFAULT_PASSWORD,
+                    role         = User.Role.TEACHER,
+                    phone_number = random_phone(),
+                    address      = fake_en.address(),
+                    is_active    = True,
+                )
+
+                teacher = Teacher.objects.create(
+                    user       = user,
+                    teacher_id = str(Teacher.objects.count() + 1),
+                    hire_date  = fake_en.date_between(start_date="-10y", end_date="today"),
+                )
+
+                # Assign ONLY the specialization subject — no random assignment
+                teacher.assigned_subjects.set([subject_obj])
+
+                # Assign the pre-divided class chunk for this teacher
+                teacher_classes = class_chunks[j]
+                teacher.assigned_classes.set(teacher_classes)
+
+                # Create TeacherSubjectClass records for every assigned class
+                # so students in any class can see their subject's teacher
+                for cls in teacher_classes:
                     TeacherSubjectClass.objects.get_or_create(
-                        teacher=teacher, subject=subj,
+                        teacher=teacher, subject=subject_obj,
                         class_id=cls.display_name,
                     )
 
-            teachers.append(teacher)
+                teachers.append(teacher)
 
         self.stdout.write(self.style.SUCCESS(f"   {len(teachers)} معلم"))
         return teachers
@@ -263,7 +318,8 @@ class Command(BaseCommand):
                 face_registered = False,
             )
 
-            student.subjects.set(random.sample(subjects, k=random.randint(4, 7)))
+            # Every student is enrolled in all subjects
+            student.subjects.set(subjects)
 
         self.stdout.write(self.style.SUCCESS(f"   {count} طالب"))
 

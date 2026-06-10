@@ -61,8 +61,8 @@ export function DashboardCharts({
           ) : trendEmpty ? (
             <ChartEmpty icon="📅" text="No sessions recorded this week" />
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={trend} margin={{ top: 12, right: 12, left: -8, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart data={trend} margin={{ top: 20, right: 30, left: 10, bottom: 50 }}>
                 <defs>
                   <linearGradient id="dashAreaFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%"   stopColor="#6366f1" stopOpacity={0.35} />
@@ -70,7 +70,7 @@ export function DashboardCharts({
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dash-chart-grid, #e2e8f0)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={50} tickMargin={12} />
                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={36} allowDecimals={false} />
                 <Tooltip content={(props) => <ChartTooltip {...props} />} cursor={{ stroke: '#c7d2fe', strokeWidth: 1 }} />
                 <Area
@@ -97,10 +97,10 @@ export function DashboardCharts({
           ) : barsEmpty ? (
             <ChartEmpty icon="📝" text="No assessments created yet" />
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={bars} margin={{ top: 12, right: 12, left: -8, bottom: 0 }} barCategoryGap="18%">
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={bars} margin={{ top: 20, right: 30, left: 10, bottom: 70 }} barCategoryGap="18%">
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dash-chart-grid, #e2e8f0)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} angle={-40} textAnchor="end" height={70} tickMargin={18} interval={0} />
                 <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} width={36} allowDecimals={false} />
                 <Tooltip content={(props) => <ChartTooltip {...props} />} cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }} />
                 <Bar dataKey="value" fill="#7c3aed" radius={[8, 8, 0, 0]} maxBarSize={48} />

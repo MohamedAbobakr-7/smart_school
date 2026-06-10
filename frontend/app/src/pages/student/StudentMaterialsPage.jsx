@@ -12,7 +12,7 @@ export function StudentMaterialsPage() {
     setLoading(true)
     setError('')
     try {
-      // The backend MaterialViewSet restricts the student to see only their subjects' materials
+      // The backend MaterialViewSet restricts the student to see only their subjects' & class materials
       const materialsData = await apiFetchAll('/materials/')
       setMaterials(materialsData)
     } catch (e) {
@@ -30,7 +30,7 @@ export function StudentMaterialsPage() {
     <>
       <PageHeader
         title="Educational Materials"
-        subtitle="Download PDF lectures and study documents for your enrolled subjects."
+        subtitle="Download PDF lectures and study documents for your enrolled subjects and class."
       />
 
       <Card>
@@ -41,7 +41,7 @@ export function StudentMaterialsPage() {
           <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>📚</div>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem' }}>No materials available</h3>
-            <p style={{ color: '#6b7280', margin: 0 }}>Your teachers haven't uploaded any documents yet.</p>
+            <p style={{ color: '#6b7280', margin: 0 }}>Your teachers haven't uploaded any documents for your class yet.</p>
           </div>
         )}
 
@@ -65,6 +65,11 @@ export function StudentMaterialsPage() {
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem', color: 'var(--text-color)' }}>{m.title}</h3>
                     <div style={{ fontSize: '0.8rem', color: 'var(--primary-color)', fontWeight: 600 }}>{m.subject_name || m.subject}</div>
+                    {m.target_classes_display && m.target_classes_display.length > 0 && (
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                        🏫 {m.target_classes_display.map((c) => c.name).join(', ')}
+                      </div>
+                    )}
                   </div>
                 </div>
                 

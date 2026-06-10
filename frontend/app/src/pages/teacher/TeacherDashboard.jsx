@@ -17,7 +17,7 @@ function buildActivityItems(recentExams = []) {
   return recentExams.map((exam, idx) => ({
     id: String(exam.id),
     title: exam.name,
-    subtitle: `${exam.exam_type_display} · ${exam.subject_name}${exam.class_id ? ` · ${exam.class_id}` : ''}`,
+    subtitle: `${exam.exam_type_display} · ${exam.subject_name}${exam.grade_name || exam.grade ? ` · ${exam.grade_name || exam.grade}` : ''}`,
     time: formatRelative(exam.created_at),
     tone: TONES[idx % TONES.length],
   }))

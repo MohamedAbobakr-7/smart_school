@@ -9,19 +9,31 @@ export function TeacherMaterialsPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [materials, setMaterials] = useState([])
-  const { teacher: teacherProfile, mySubjectIds } = useTeacherProfile()
+  const { teacher: teacherProfile, mySubjectIds, myClassObjects } = useTeacherProfile()
   const [allSubjects, setAllSubjects] = useState([])
 
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadDescription, setUploadDescription] = useState('')
   const [uploadSubjectId, setUploadSubjectId] = useState('')
+  const [selectedClasses, setSelectedClasses] = useState([])
   const [uploadFile, setUploadFile] = useState(null)
+
+  const [filterClass, setFilterClass] = useState('')
+  const [filterSubject, setFilterSubject] = useState('')
 
   const subjects = useMemo(() => {
     if (mySubjectIds.length === 0) return []
     return allSubjects.filter((s) => mySubjectIds.includes(Number(s.id)))
   }, [allSubjects, mySubjectIds])
+
+  const filteredMaterials = useMemo(() => {
+    return materials.filter((m) => {
+      const matchSubject = !filterSubject || String(m.subject) === String(filterSubject)
+      const matchClass = !filterClass || (m.target_classes && m.target_classes.includes(Number(filterClass)))
+      return matchSubject && matchClass
+    })
+  }, [materials, filterSubject, filterClass])
 
   async function loadData() {
     setLoading(true)
@@ -60,6 +72,10 @@ export function TeacherMaterialsPage() {
       alert('Please select a subject.')
       return
     }
+    if (selectedClasses.length === 0) {
+      alert('Please select at least one target class.')
+      return
+    }
     setBusy(true)
 
     try {
@@ -67,6 +83,9 @@ export function TeacherMaterialsPage() {
       fd.append('title', uploadTitle.trim())
       fd.append('description', uploadDescription.trim())
       fd.append('subject', uploadSubjectId)
+      selectedClasses.forEach((cId) => {
+        fd.append('target_classes', String(cId))
+      })
       fd.append('file', uploadFile)
 
       const res = await apiFetch('/materials/', {
@@ -83,6 +102,7 @@ export function TeacherMaterialsPage() {
       setUploadTitle('')
       setUploadDescription('')
       setUploadSubjectId('')
+      setSelectedClasses([])
       setUploadFile(null)
       
       await loadData()
@@ -111,7 +131,7 @@ export function TeacherMaterialsPage() {
     <>
       <PageHeader
         title="Educational Materials"
-        subtitle="Upload and manage PDF lectures and documents for your subjects."
+        subtitle="Upload and manage PDF lectures and documents for your subjects and classes."
       />
 
       <Card>
@@ -133,43 +153,85 @@ export function TeacherMaterialsPage() {
         )}
 
         {!loading && !error && materials.length > 0 && (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="feature-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Subject</th>
-                  <th>Description</th>
-                  <th>Date Uploaded</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materials.map((m) => (
-                  <tr key={m.id}>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{m.title}</div>
-                      <a href={m.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary-color)', textDecoration: 'none' }}>
-                        View File ↗
-                      </a>
-                    </td>
-                    <td>{m.subject_name || m.subject}</td>
-                    <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {m.description || '—'}
-                    </td>
-                    <td>{new Date(m.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-ghost btn-xs" style={{ color: '#dc2626' }} onClick={() => deleteMaterial(m.id)} disabled={busy}>
-                          Delete
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', flex: 1 }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: 0 }}>Filter by Subject</label>
+                <select
+                  className="login-input login-input--plain"
+                  value={filterSubject}
+                  onChange={(e) => setFilterSubject(e.target.value)}
+                >
+                  <option value="">All Subjects</option>
+                  {subjects.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.code ? `${s.code} — ` : ''}{s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', flex: 1 }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: 0 }}>Filter by Class</label>
+                <select
+                  className="login-input login-input--plain"
+                  value={filterClass}
+                  onChange={(e) => setFilterClass(e.target.value)}
+                >
+                  <option value="">All Classes</option>
+                  {myClassObjects.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="feature-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Subject</th>
+                    <th>Target Classes</th>
+                    <th>Description</th>
+                    <th>Date Uploaded</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredMaterials.map((m) => (
+                    <tr key={m.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{m.title}</div>
+                        <a href={m.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary-color)', textDecoration: 'none' }}>
+                          View File ↗
+                        </a>
+                      </td>
+                      <td>{m.subject_name || m.subject}</td>
+                      <td>
+                        {m.target_classes_display && m.target_classes_display.length > 0
+                          ? m.target_classes_display.map((c) => c.name).join(', ')
+                          : '—'}
+                      </td>
+                      <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {m.description || '—'}
+                      </td>
+                      <td>{new Date(m.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn btn-ghost btn-xs" style={{ color: '#dc2626' }} onClick={() => deleteMaterial(m.id)} disabled={busy}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 
@@ -191,6 +253,32 @@ export function TeacherMaterialsPage() {
                   <option value="">— Select Subject —</option>
                   {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
                 </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Target Classes *</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', border: '1px solid #eaeaea', borderRadius: '8px', padding: '0.75rem', background: '#f9fafb' }}>
+                  {myClassObjects.map((c) => (
+                    <label key={c.id} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }}>
+                      <input
+                        type="checkbox"
+                        value={c.id}
+                        checked={selectedClasses.includes(c.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedClasses([...selectedClasses, c.id])
+                          } else {
+                            setSelectedClasses(selectedClasses.filter((id) => id !== c.id))
+                          }
+                        }}
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+                  {myClassObjects.length === 0 && (
+                    <p style={{ color: '#6b7280', fontSize: '0.85rem', margin: 0 }}>No classes assigned to you.</p>
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

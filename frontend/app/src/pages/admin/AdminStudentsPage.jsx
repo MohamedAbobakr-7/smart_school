@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { apiFetch, apiFetchAll } from '../../lib/api'
@@ -14,11 +14,6 @@ function fullName(user) {
   if (!user) return '—'
   const n = [user.first_name, user.last_name].filter(Boolean).join(' ').trim()
   return n || user.username || user.email || '—'
-}
-
-function toggleId(list, id) {
-  const n = Number(id)
-  return list.includes(n) ? list.filter((x) => x !== n) : [...list, n]
 }
 
 export function AdminStudentsPage() {
@@ -140,6 +135,23 @@ export function AdminStudentsPage() {
     }
   }
 
+  /**
+   * Fetch the auto-enrolled subject IDs for a given class from the backend.
+   * Returns an array of subject IDs (numbers), or [] if no class selected.
+   */
+  const fetchSubjectsForClass = useCallback(async (classId) => {
+    if (!classId) return []
+    try {
+      const res = await apiFetch(`/students/subjects-for-class/?class_id=${classId}`)
+      if (!res.ok) return []
+      const json = await res.json()
+      return (json.subjects || []).map(s => Number(s.id))
+    } catch (err) {
+      console.error('Failed to fetch subjects for class:', err)
+      return []
+    }
+  }, [])
+
   async function handleCreateStudent(e) {
     e.preventDefault()
     setMessage('')
@@ -212,7 +224,7 @@ export function AdminStudentsPage() {
     }
   }
 
-  function startEdit(s) {
+  async function startEdit(s) {
     const u = userById.get(Number(s.user))
     setEditing(s)
     setEditName(u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : '')
@@ -220,10 +232,16 @@ export function AdminStudentsPage() {
     setEditPassword('')
     setEditStudentId(s.student_id || '')
     setEditParentId(s.parent ? String(s.parent) : '')
-    setEditSubjectIds(Array.isArray(s.subjects) ? s.subjects.map(Number) : [])
     setEditSchoolClassId(s.school_class ? String(s.school_class) : '')
     setEditPhotoFile(null)
     setEditPhotoPreview(s.photo_url || null)
+    // Auto-fetch subjects for the student's current class
+    if (s.school_class) {
+      const ids = await fetchSubjectsForClass(String(s.school_class))
+      setEditSubjectIds(ids)
+    } else {
+      setEditSubjectIds([])
+    }
   }
 
   function cancelEdit() {
@@ -366,7 +384,7 @@ export function AdminStudentsPage() {
     <>
       <PageHeader
         title="Student Management"
-        subtitle="Manage all student profiles, enrollments, and accounts."
+        subtitle="Manage all student profiles and accounts."
       />
 
       {message && <div style={{ padding: '1rem', background: '#ecfdf5', color: '#065f46', borderRadius: '8px', border: '1px solid #a7f3d0', marginBottom: '1.5rem', fontWeight: 500 }}>{message}</div>}
@@ -474,7 +492,7 @@ export function AdminStudentsPage() {
                           </td>
                           <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.student_id || '—'}</td>
                           <td>{s.school_class_display || '—'}</td>
-                          <td>{parent ? (parentById.get(s.parent)?.parent_id || `#${parent.id}`) : '—'}</td>
+                          <td>{parent ? (fullName(userById.get(Number(parentById.get(s.parent)?.user))) || parentById.get(s.parent)?.parent_id || `#${parent.id}`) : '—'}</td>
                           <td style={{ maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {subjNames.length ? subjNames.join(', ') : '—'}
                           </td>
@@ -535,7 +553,12 @@ export function AdminStudentsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Class</label>
-                  <select className="login-input login-input--plain" value={createClassId} onChange={e => setCreateClassId(e.target.value)}>
+                  <select className="login-input login-input--plain" value={createClassId} onChange={async e => {
+                    const val = e.target.value
+                    setCreateClassId(val)
+                    const ids = await fetchSubjectsForClass(val)
+                    setCreateSubjectIds(ids)
+                  }}>
                     <option value="">— No class —</option>
                     {classes.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
                   </select>
@@ -544,24 +567,8 @@ export function AdminStudentsPage() {
                   <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Parent</label>
                   <select className="login-input login-input--plain" value={createParentId} onChange={e => setCreateParentId(e.target.value)}>
                     <option value="">— No parent link —</option>
-                    {parents.map(p => <option key={p.id} value={p.id}>{p.parent_id || `#${p.id}`}</option>)}
+                    {parents.map(p => <option key={p.id} value={p.id}>{fullName(userById.get(Number(p.user))) || p.parent_id || `#${p.id}`}</option>)}
                   </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Subject Enrollments</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #eaeaea' }}>
-                  {subjects.map((s) => (
-                    <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={createSubjectIds.includes(Number(s.id))}
-                        onChange={() => setCreateSubjectIds((prev) => toggleId(prev, s.id))}
-                      />
-                      {s.name}
-                    </label>
-                  ))}
                 </div>
               </div>
 
@@ -628,7 +635,12 @@ export function AdminStudentsPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Class</label>
-                  <select className="login-input login-input--plain" value={editSchoolClassId} onChange={e => setEditSchoolClassId(e.target.value)}>
+                  <select className="login-input login-input--plain" value={editSchoolClassId} onChange={async e => {
+                    const val = e.target.value
+                    setEditSchoolClassId(val)
+                    const ids = await fetchSubjectsForClass(val)
+                    setEditSubjectIds(ids)
+                  }}>
                     <option value="">— No class —</option>
                     {classes.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
                   </select>
@@ -637,24 +649,8 @@ export function AdminStudentsPage() {
                   <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Parent</label>
                   <select className="login-input login-input--plain" value={editParentId} onChange={e => setEditParentId(e.target.value)}>
                     <option value="">— No parent link —</option>
-                    {parents.map(p => <option key={p.id} value={p.id}>{p.parent_id || `#${p.id}`}</option>)}
+                    {parents.map(p => <option key={p.id} value={p.id}>{fullName(userById.get(Number(p.user))) || p.parent_id || `#${p.id}`}</option>)}
                   </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Subject Enrollments</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #eaeaea' }}>
-                  {subjects.map((s) => (
-                    <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={editSubjectIds.includes(Number(s.id))}
-                        onChange={() => setEditSubjectIds((prev) => toggleId(prev, s.id))}
-                      />
-                      {s.name}
-                    </label>
-                  ))}
                 </div>
               </div>
 

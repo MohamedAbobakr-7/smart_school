@@ -3,6 +3,7 @@ from .models import Student
 from parents.models import Parent
 from subjects.models import Subject
 from classes.models import SchoolClass
+from .utils import _extract_grade_number, get_subjects_for_grade, get_subject_ids_for_grade
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -42,6 +43,9 @@ class StudentSerializer(serializers.ModelSerializer):
     )
     defer_student_id = serializers.BooleanField(write_only=True, required=False, default=False)
 
+    # Read-only field showing which subjects are auto-enrolled for the student's grade
+    auto_enrolled_subject_ids = serializers.SerializerMethodField()
+
     class Meta:
         model = Student
         fields = [
@@ -61,10 +65,11 @@ class StudentSerializer(serializers.ModelSerializer):
             'parent_id',
             'subjects',
             'subject_ids',
+            'auto_enrolled_subject_ids',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'face_registered', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'face_registered', 'created_at', 'updated_at', 'auto_enrolled_subject_ids']
 
     def get_photo_url(self, obj):
         if not obj.photo:
@@ -79,23 +84,46 @@ class StudentSerializer(serializers.ModelSerializer):
         name = (u.get_full_name() or '').strip()
         return name or u.username or ''
 
+    def get_auto_enrolled_subject_ids(self, obj):
+        """
+        Return the list of subject IDs that should be auto-enrolled
+        based on the student's current class grade.
+        """
+        grade_number = _extract_grade_number(obj.school_class)
+        return get_subject_ids_for_grade(grade_number)
+
     def _auto_generate_id(self, school_class):
         """Generate a student ID using the utility function."""
         from .utils import generate_student_id
         return generate_student_id(school_class=school_class)
 
+    def _determine_subjects_for_class(self, school_class):
+        """
+        Given a SchoolClass instance, return the list of Subject objects
+        that should be auto-enrolled based on the grade number.
+        Returns None if no class is provided (subjects left unchanged).
+        """
+        if school_class is None:
+            return None
+        grade_number = _extract_grade_number(school_class)
+        return list(get_subjects_for_grade(grade_number))
+
     def validate(self, attrs):
         """
         - CREATE: auto-generate student_id if not provided, unless defer_student_id=True
           (leave null for later batch "Generate ID").
+          Auto-assign subjects based on the selected class grade.
         - UPDATE (PATCH): if student_id is sent as null/None/blank → None
           so the admin can clear it and later use Generate ID.
           If student_id is not included in the PATCH at all, leave existing value untouched.
+          If school_class changes, auto-update subjects based on new grade.
+        - Enforce grade-based subject rules: any subject_ids that don't belong
+          to the grade's allowed set are silently removed.
         """
         is_create = self.instance is None
         defer = attrs.pop('defer_student_id', False)
 
-        # Check if student_id was explicitly sent in this request
+        # ── Student ID handling ──────────────────────────────────────
         student_id = attrs.get('student_id', '__NOT_PROVIDED__')
 
         if is_create:
@@ -112,5 +140,29 @@ class StudentSerializer(serializers.ModelSerializer):
             elif student_id == '__NOT_PROVIDED__':
                 # Not included in PATCH → don't touch it at all
                 attrs.pop('student_id', None)
+
+        # ── Grade-based subject auto-enrollment ──────────────────────
+        school_class = attrs.get('school_class', '__NOT_PROVIDED__')
+
+        # Determine the effective school_class for this request
+        if is_create:
+            effective_class = school_class  # on create, always use the provided value
+        else:
+            # On update: if school_class was not provided, use the existing instance value
+            if school_class == '__NOT_PROVIDED__':
+                effective_class = self.instance.school_class
+            else:
+                effective_class = school_class
+
+        # Auto-assign subjects based on the effective class grade
+        auto_subjects = self._determine_subjects_for_class(effective_class)
+
+        if auto_subjects is not None:
+            # We have a class → override subject_ids with grade-based enrollment
+            attrs['subjects'] = auto_subjects
+        elif is_create:
+            # No class on create → no subjects
+            attrs['subjects'] = []
+        # else: no class on update → keep existing subjects unchanged
 
         return attrs

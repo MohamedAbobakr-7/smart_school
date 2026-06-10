@@ -335,16 +335,25 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
 
         session = serializer.save(**save_kwargs)
 
-        # Bulk-create absent records for all students in the class
+        # Ensure every student in the class has an attendance record linked to
+        # this session.  If a record already exists for today (e.g. from a
+        # previous/cancelled session or manual entry), link it to the NEW
+        # session so the roster & counts are correct.  Otherwise create a new
+        # absent record.
         if school_class:
             students = list(school_class.students.all())
         else:
             students = []
 
         new_records = []
+        existing_to_link = []
         for student in students:
-            exists = Attendance.objects.filter(student=student, date=today).exists()
-            if not exists:
+            existing = Attendance.objects.filter(student=student, date=today).first()
+            if existing:
+                # Link the existing record to this session (keep its status)
+                existing.session = session
+                existing_to_link.append(existing)
+            else:
                 new_records.append(Attendance(
                     student=student,
                     date=today,
@@ -356,9 +365,11 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
         if new_records:
             # bulk_create bypasses model.save() validation; safe here since we checked uniqueness
             Attendance.objects.bulk_create(new_records)
+        if existing_to_link:
+            Attendance.objects.bulk_update(existing_to_link, ['session'])
 
         # Update count
-        session.total_attendance_marked = session.attendances.count()
+        session.total_attendance_marked = session.attendances.filter(status=Attendance.PRESENT).count()
         session.save(update_fields=['total_attendance_marked'])
 
     @action(detail=False, methods=['get'], url_path='active', url_name='active-session')

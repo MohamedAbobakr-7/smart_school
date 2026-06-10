@@ -133,8 +133,8 @@ class Command(BaseCommand):
             }
         )
         
-        # Assign subjects to teacher
-        teacher.assigned_subjects.add(math_subject, english_subject)
+        # Assign only the specialization subject to teacher (Math teacher → only Mathematics)
+        teacher.assigned_subjects.add(math_subject)
         
         # Create Attendance
         self.stdout.write('Creating attendance records...')
