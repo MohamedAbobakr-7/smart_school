@@ -1,6 +1,5 @@
 import os
 
-from django.db.models import Q
 from django.http import FileResponse, Http404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -73,7 +72,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Weekly analytics snapshots: dashboards, chart payloads, and PDF export.
-    Admins see all scopes; teachers see school-wide plus their own TEACHER rows.
+    Admins see all scopes; teachers see only their own TEACHER-scoped reports.
     """
     serializer_class = WeeklyReportSerializer
     permission_classes = [IsAuthenticated]
@@ -93,10 +92,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
             return qs
         if user.is_teacher() and hasattr(user, 'teacher_profile'):
             tp = user.teacher_profile
-            return qs.filter(
-                Q(scope=WeeklyReport.Scope.SCHOOL)
-                | Q(scope=WeeklyReport.Scope.TEACHER, teacher=tp)
-            )
+            return qs.filter(scope=WeeklyReport.Scope.TEACHER, teacher=tp)
         return WeeklyReport.objects.none()
 
     def get_serializer_context(self):
@@ -128,7 +124,6 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
                 )
                 .order_by('-week_start')[:weeks]
             )
-            latest_teacher = None
         else:
             tp = getattr(user, 'teacher_profile', None)
             if not tp:
@@ -141,10 +136,6 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
                 )
                 .order_by('-week_start')[:weeks]
             )
-            latest_teacher = WeeklyReport.objects.filter(
-                status=WeeklyReport.Status.READY,
-                scope=WeeklyReport.Scope.SCHOOL,
-            ).order_by('-week_start').first()
 
         trend = []
         for r in reversed(list(trend_qs)):
@@ -169,12 +160,7 @@ class WeeklyReportViewSet(viewsets.ReadOnlyModelViewSet):
             'latest': WeeklyReportSerializer(latest, context=self.get_serializer_context()).data
             if latest
             else None,
-            'school_context': None,
         }
-        if latest_teacher:
-            payload['school_context'] = WeeklyReportSerializer(
-                latest_teacher, context=self.get_serializer_context()
-            ).data
 
         return Response(payload)
 

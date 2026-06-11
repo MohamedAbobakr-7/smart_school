@@ -314,37 +314,90 @@ export function AdminSubjectsPage() {
 
   /* ─── teacher assignment panel (reusable render) ──────────── */
   function TeacherAssignmentPanel({ assignments, setAssignments }) {
+    const assignedIds = Object.keys(assignments).map(Number)
+    const availableTeachers = teachers.filter((t) => !assignedIds.includes(t.id))
+
+    function addTeacher(teacherId) {
+      if (!teacherId) return
+      const tid = String(teacherId)
+      setAssignments((prev) => ({ ...prev, [tid]: '' }))
+    }
+
+    function removeTeacher(teacherId) {
+      const tid = String(teacherId)
+      setAssignments((prev) => {
+        const next = { ...prev }
+        delete next[tid]
+        return next
+      })
+    }
+
+    if (teachers.length === 0) {
+      return <span className="muted">No teacher profiles found.</span>
+    }
+
     return (
-      <div className="teacher-assign-grid">
-        {teachers.length === 0 && <span className="muted">No teacher profiles found.</span>}
-        {teachers.map((t) => {
-          const tid = String(t.id)
-          const user = userById.get(t.user)
-          const isChecked = tid in assignments
-          return (
-            <div key={t.id} className="teacher-assign-row">
-              <label className="teaching-check">
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => toggleTeacher(assignments, setAssignments, t.id)}
-                />
-                <span className="teacher-assign-name">
-                  {t.teacher_id || `#${t.id}`}
-                  {user ? ` — ${fullName(user)}` : ''}
-                </span>
-              </label>
-              {isChecked && (
-                <input
-                  className="login-input login-input--plain teacher-assign-classes"
-                  placeholder="Classes (optional, e.g. G10-A, G10-B)"
-                  value={assignments[tid] || ''}
-                  onChange={(ev) => setClassText(assignments, setAssignments, t.id, ev.target.value)}
-                />
-              )}
-            </div>
-          )
-        })}
+      <div className="teacher-assign-panel">
+        {/* ── Dropdown to add a teacher ── */}
+        <div className="teacher-assign-dropdown-wrap">
+          <select
+            className="teacher-assign-dropdown"
+            value=""
+            onChange={(e) => {
+              addTeacher(Number(e.target.value))
+              e.target.value = ''
+            }}
+          >
+            <option value="">Select a teacher to assign…</option>
+            {availableTeachers.map((t) => {
+              const u = userById.get(t.user)
+              return (
+                <option key={t.id} value={t.id}>
+                  {t.teacher_id || `#${t.id}`} — {u ? fullName(u) : 'Unknown'}
+                </option>
+              )
+            })}
+          </select>
+          {availableTeachers.length === 0 && assignedIds.length > 0 && (
+            <span className="teacher-assign-all-msg">All teachers assigned</span>
+          )}
+        </div>
+
+        {/* ── Selected teachers as styled cards ── */}
+        {assignedIds.length > 0 && (
+          <div className="teacher-assign-selected">
+            {assignedIds.map((tid) => {
+              const t = teachers.find((x) => x.id === Number(tid))
+              if (!t) return null
+              const u = userById.get(t.user)
+              return (
+                <div key={tid} className="teacher-assign-card">
+                  <div className="teacher-assign-card-header">
+                    <div className="teacher-assign-card-info">
+                      <span className="teacher-assign-card-id">{t.teacher_id || `#${t.id}`}</span>
+                      <span className="teacher-assign-card-name">{u ? fullName(u) : ''}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="teacher-assign-card-remove"
+                      onClick={() => removeTeacher(Number(tid))}
+                      title="Remove teacher"
+                      aria-label={`Remove ${t.teacher_id || `#${t.id}`}`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <input
+                    className="login-input login-input--plain teacher-assign-classes"
+                    placeholder="Classes (optional, e.g. G10-A, G10-B)"
+                    value={assignments[String(tid)] || ''}
+                    onChange={(ev) => setClassText(assignments, setAssignments, Number(tid), ev.target.value)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     )
   }

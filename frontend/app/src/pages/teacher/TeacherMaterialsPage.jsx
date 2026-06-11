@@ -95,7 +95,12 @@ export function TeacherMaterialsPage() {
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.detail || 'Upload failed')
+        // DRF returns field-specific errors as {field: [messages]}, not just {detail: msg}
+        const fieldErrors = Object.entries(json)
+          .filter(([key, val]) => Array.isArray(val) && val.length > 0)
+          .map(([key, val]) => `${key}: ${val.join(', ')}`)
+          .join('; ')
+        throw new Error(json.detail || fieldErrors || 'Upload failed')
       }
 
       setShowUploadModal(false)

@@ -15,6 +15,12 @@ class SubjectSerializer(serializers.ModelSerializer):
             'teachers_count', 'teacher_names',
             'created_at', 'updated_at',
         ]
+        extra_kwargs = {
+            'name_en': {'required': False, 'allow_blank': True},
+            'name_ar': {'required': False, 'allow_blank': True},
+            'description_en': {'required': False, 'allow_blank': True},
+            'description_ar': {'required': False, 'allow_blank': True},
+        }
 
     def _get_teacher_name(self, item):
         """Extract teacher display name from either a TeacherSubjectClass or a Teacher object."""
@@ -68,6 +74,12 @@ class MaterialSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'uploaded_by']
+        extra_kwargs = {
+            'title_en': {'required': False, 'allow_blank': True},
+            'title_ar': {'required': False, 'allow_blank': True},
+            'description_en': {'required': False, 'allow_blank': True},
+            'description_ar': {'required': False, 'allow_blank': True},
+        }
 
     def get_target_classes_display(self, obj):
         return [

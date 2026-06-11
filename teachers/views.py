@@ -50,19 +50,81 @@ def teacher_class_visibility_sets(teacher):
     return all_class_pks, all_string_class_ids
 
 
+def _build_class_id_lookup():
+    """
+    Build a dict mapping multiple string key formats to SchoolClass PKs.
+
+    For each SchoolClass we register:
+      - display_name  (e.g. "Grade 10 - A")
+      - name          (e.g. "Grade 10")
+      - abbreviated   (e.g. "G10-A", "10-A")  — parsed from name + section
+
+    This lets us resolve TeacherSubjectClass.class_id strings (which may
+    use any of these formats) to the correct SchoolClass PKs.
+    """
+    import re
+    from classes.models import SchoolClass
+
+    lookup: dict[str, int] = {}
+    for sc in SchoolClass.objects.all():
+        lookup[sc.display_name] = sc.id
+        lookup[sc.name] = sc.id
+        if sc.section:
+            # Extract grade numbers from name (e.g. "Grade 10" → "10")
+            for num in re.findall(r'\d+', sc.name):
+                lookup[f'G{num}-{sc.section}'] = sc.id
+                lookup[f'{num}-{sc.section}'] = sc.id
+                lookup[f'Grade{num}-{sc.section}'] = sc.id
+                lookup[f'Grade {num}-{sc.section}'] = sc.id
+    return lookup
+
+
+def teacher_assigned_students_queryset(teacher):
+    """Students enrolled in classes currently assigned to this teacher."""
+    from students.models import Student
+
+    assigned_pks = list(teacher.assigned_classes.values_list('id', flat=True))
+    if not assigned_pks:
+        return Student.objects.none()
+    return Student.objects.filter(school_class_id__in=assigned_pks).order_by().distinct()
+
+
 def teacher_visible_students_queryset(teacher):
-    """Students visible to this teacher (same rules as dashboard)."""
+    """Students visible to this teacher (includes historical sessions/exams)."""
     from django.db.models import Q as DQ
     from students.models import Student
 
     all_class_pks, all_string_class_ids = teacher_class_visibility_sets(teacher)
+
+    # Resolve string class_ids (from TeacherSubjectClass) to SchoolClass PKs
+    # so students linked via the school_class FK are also found, even if
+    # their class_id CharField is empty or uses a different format.
+    if all_string_class_ids:
+        lookup = _build_class_id_lookup()
+        resolved_pks = set()
+        for cid in all_string_class_ids:
+            pk = lookup.get(cid)
+            if pk:
+                resolved_pks.add(pk)
+        all_class_pks |= resolved_pks
+
     if not all_class_pks and not all_string_class_ids:
         return Student.objects.none()
-    student_filter = DQ()
+
+    # Build OR filter carefully — an empty Q() matches EVERYTHING, so
+    # never start with Q(). Collect conditions into a list and combine.
+    parts = []
     if all_class_pks:
-        student_filter |= DQ(school_class_id__in=list(all_class_pks))
+        parts.append(DQ(school_class_id__in=list(all_class_pks)))
     if all_string_class_ids:
-        student_filter |= DQ(class_id__in=list(all_string_class_ids))
+        parts.append(DQ(class_id__in=list(all_string_class_ids)))
+    if not parts:
+        return Student.objects.none()
+
+    student_filter = parts[0]
+    for p in parts[1:]:
+        student_filter |= p
+
     return Student.objects.filter(student_filter).order_by().distinct()
 
 
@@ -145,6 +207,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
             # Lazy imports to avoid circular deps at module level
             from attendance.models import AttendanceSession
             from exams.models import Exam, Grade
+            from students.models import Student
 
             # ── 1. My Classes ──────────────────────────────────────────────
             # Use the assigned_classes M2M as the authoritative source for
@@ -160,7 +223,10 @@ class TeacherViewSet(viewsets.ModelViewSet):
             ]
 
             # ── 2. Students Taught ─────────────────────────────────────────
-            students_taught = teacher_visible_students_queryset(teacher).count()
+            assigned_class_ids = list(teacher.assigned_classes.values_list('id', flat=True))
+            students_taught = Student.objects.filter(
+                school_class_id__in=assigned_class_ids
+            ).count() if assigned_class_ids else 0
 
 
             # ── 3. Sessions This Week ──────────────────────────────────────
@@ -219,6 +285,52 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 for i in range(7)
             ]
 
+            # ── 5b. Weekly attendance trend (assigned classes only) ────────
+            from attendance.models import Attendance
+            att_week = Attendance.objects.filter(
+                date__gte=week_start,
+                date__lte=week_end,
+                student__school_class_id__in=assigned_class_ids,
+            ) if assigned_class_ids else Attendance.objects.none()
+
+            day_present = {i: 0 for i in range(7)}
+            day_absent = {i: 0 for i in range(7)}
+            for row in att_week.values('date', 'status'):
+                wd = row['date'].weekday()
+                if row['status'] == Attendance.PRESENT:
+                    day_present[wd] += 1
+                else:
+                    day_absent[wd] += 1
+
+            weekly_attendance = [
+                {'name': _WEEK_LABELS[i], 'present': day_present[i], 'absent': day_absent[i]}
+                for i in range(7)
+            ]
+
+            total_att_week = att_week.count()
+            present_week = att_week.filter(status=Attendance.PRESENT).count()
+            attendance_rate = (
+                round(present_week / total_att_week * 100, 1) if total_att_week else None
+            )
+
+            # ── 5c. Per-class stats (assigned classes only) ────────────────
+            from students.reporting import build_student_stats_list
+
+            class_stats = []
+            if assigned_class_ids:
+                for cls in assigned_qs:
+                    cls_students = Student.objects.filter(school_class_id=cls.id)
+                    cls_rows = build_student_stats_list(cls_students, request, teacher=teacher)
+                    att_pcts = [r['attendance_pct'] for r in cls_rows if r['attendance_pct'] is not None]
+                    grd_avgs = [r['avg_grade'] for r in cls_rows if r['avg_grade'] is not None]
+                    class_stats.append({
+                        'id': cls.id,
+                        'name': cls.display_name or cls.name,
+                        'student_count': len(cls_rows),
+                        'attendance_rate': round(sum(att_pcts) / len(att_pcts), 1) if att_pcts else None,
+                        'avg_grade': round(sum(grd_avgs) / len(grd_avgs), 1) if grd_avgs else None,
+                    })
+
             # ── 6. Assessment Mix Chart ────────────────────────────────────
             # .order_by() is REQUIRED for MS SQL Server: when using
             # values().annotate(), the default Meta ordering (created_at)
@@ -271,6 +383,9 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 'students_taught': students_taught,
                 'sessions_this_week': sessions_this_week,
                 'avg_score': avg_score,
+                'attendance_rate': attendance_rate,
+                'weekly_attendance': weekly_attendance,
+                'class_stats': class_stats,
                 'weekly_activity': weekly_activity,
                 'assessment_mix': assessment_mix,
                 'recent_exams': recent_exams,
@@ -298,14 +413,16 @@ class TeacherViewSet(viewsets.ModelViewSet):
         GET /api/teachers/my-students/
 
         Per-student stats for the teacher weekly reports UI (same row shape as admin all-stats).
+        Only includes grades from the teacher's assigned subjects so the
+ report reflects their own subject performance.
         """
         from students.reporting import build_student_stats_list
 
         teacher = getattr(request.user, 'teacher_profile', None)
         if teacher is None:
             return Response([])
-        qs = teacher_visible_students_queryset(teacher)
-        return Response(build_student_stats_list(qs, request))
+        qs = teacher_assigned_students_queryset(teacher)
+        return Response(build_student_stats_list(qs, request, teacher=teacher))
 
     # ── helpers ────────────────────────────────────────────────────────
 

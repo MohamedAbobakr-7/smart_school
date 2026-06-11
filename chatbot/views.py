@@ -38,6 +38,8 @@ INTENT_KEYWORDS = {
         'subject', 'subjects', 'course', 'courses', 'enrolled',
         'enrollment', 'taking', 'study', 'studying',
         'curriculum', 'lesson', 'lessons', 'topic', 'topics',
+        "children's subjects", 'children subjects', "kids' subjects",
+        'kids subjects', 'my children subjects', "my children's subjects",
     ],
     'teachers': [
         'teacher', 'teachers', 'staff', 'instructor', 'instructors',
@@ -94,6 +96,14 @@ def detect_intent(message: str, role: str) -> str:
     'students', 'exams', 'overview', 'children', 'greeting', or 'general'.
     """
     msg_lower = message.lower().strip()
+
+    # Parent phrases like "children's subjects" or "my kids' attendance":
+    # the topic (subjects, attendance, …) wins over bare "children".
+    child_refs = INTENT_KEYWORDS['children']
+    if any(kw in msg_lower for kw in child_refs):
+        for topic in ('attendance', 'grades', 'subjects', 'exams'):
+            if any(kw in msg_lower for kw in INTENT_KEYWORDS[topic]):
+                return topic
 
     # Check each intent in priority order
     for intent in INTENT_PRIORITY:
@@ -630,6 +640,23 @@ def _build_student_context(user, intent):
     return lines
 
 
+def _subjects_for_student(student):
+    """Enrolled subjects for a student, with grade-based fallback."""
+    subjects = list(student.subjects.all()[:15])
+    if subjects:
+        return subjects
+    from students.utils import _extract_grade_number, get_subjects_for_grade
+
+    grade_number = None
+    if student.school_class_id and student.school_class:
+        grade_number = _extract_grade_number(student.school_class.name)
+    if grade_number is None and student.class_level:
+        grade_number = _extract_grade_number(student.class_level)
+    if grade_number is not None:
+        return list(get_subjects_for_grade(grade_number)[:15])
+    return []
+
+
 def _build_parent_context(user, intent):
     """Build context for parent, filtered by intent."""
     lines = []
@@ -780,13 +807,13 @@ def _build_parent_context(user, intent):
                 )
 
         elif intent == 'subjects':
+            lines.append("Children's enrolled subjects:")
             for child in children[:4]:
                 cname = child.user.get_full_name() or child.user.username
-                subjects = list(child.subjects.all()[:10])
+                subjects = _subjects_for_student(child)
                 if subjects:
                     lines.append(
-                        f"  {cname}'s subjects: "
-                        f"{', '.join(s.name for s in subjects)}."
+                        f"  {cname}: {', '.join(s.name for s in subjects)}."
                     )
                 else:
                     lines.append(f"  {cname}: No subjects enrolled.")

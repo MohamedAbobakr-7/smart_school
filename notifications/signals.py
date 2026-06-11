@@ -20,7 +20,7 @@ from django.conf import settings
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from attendance.models import Attendance
+from attendance.models import Attendance, AttendanceSession
 from exams.models import Grade
 from reports.models import Report, WeeklyReport
 from users.models import User
@@ -52,6 +52,30 @@ def _class_teachers(student, subject=None):
     if subject:
         qs = qs.filter(assigned_subjects=subject)
     return [t for t in qs if t.user_id]
+
+
+def _student_subject_teachers(student):
+    """Return teachers who teach subjects this student is enrolled in,
+    filtered to those also assigned to the student's class (if any).
+
+    This is more targeted than _class_teachers() which returns ALL class
+    teachers regardless of subject overlap.
+    """
+    from teachers.models import Teacher
+
+    subjects = student.subjects.all()
+    if not subjects:
+        return []
+
+    qs = Teacher.objects.filter(
+        assigned_subjects__in=subjects,
+    ).select_related("user")
+
+    school_class = getattr(student, "school_class", None)
+    if school_class:
+        qs = qs.filter(assigned_classes=school_class)
+
+    return list(qs.distinct())
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -139,19 +163,69 @@ def notify_attendance_absence(sender, instance: Attendance, created, **kwargs):
             student=student,
         )
 
-    # ── TEACHERS in the student's class ──────────────────────────────────────
-    for teacher in _class_teachers(student):
+    # ── TEACHERS: only the relevant ones ──────────────────────────────────────
+    # Priority: (1) teacher who marked the attendance, (2) session instructor,
+    # (3) subject teachers for this student — NOT all class teachers.
+    notified_teacher_ids = set()
+
+    # 1. Teacher who marked the attendance (marked_by)
+    marked_by = instance.marked_by
+    if marked_by and marked_by.user_id:
         services.create_notification(
-            recipient=teacher.user,
+            recipient=marked_by.user,
             notification_type=Notification.Type.ATTENDANCE,
             title_en="Student Absent",
             title_ar="غياب طالب",
             body_en=f"{student_name} was absent today from your class.",
             body_ar=f"تغيّب {student_name} اليوم من حصتك.",
             metadata=common_meta,
-            dedupe_key=f"absent_{student.id}_{date_str}_teacher_{teacher.id}",
+            dedupe_key=f"absent_{student.id}_{date_str}_teacher_{marked_by.id}",
             student=student,
         )
+        notified_teacher_ids.add(marked_by.id)
+
+    # 2. Session instructor (face-recognition attendance)
+    session_instructor = None
+    if instance.session_id:
+        try:
+            session = AttendanceSession.objects.select_related(
+                "instructor__user"
+            ).get(pk=instance.session_id)
+            session_instructor = session.instructor
+        except AttendanceSession.DoesNotExist:
+            pass
+    if (
+        session_instructor
+        and session_instructor.user_id
+        and session_instructor.id not in notified_teacher_ids
+    ):
+        services.create_notification(
+            recipient=session_instructor.user,
+            notification_type=Notification.Type.ATTENDANCE,
+            title_en="Student Absent",
+            title_ar="غياب طالب",
+            body_en=f"{student_name} was absent today from your class.",
+            body_ar=f"تغيّب {student_name} اليوم من حصتك.",
+            metadata=common_meta,
+            dedupe_key=f"absent_{student.id}_{date_str}_teacher_{session_instructor.id}",
+            student=student,
+        )
+        notified_teacher_ids.add(session_instructor.id)
+
+    # 3. If no specific teacher identified (e.g. admin-created), notify subject teachers
+    if not notified_teacher_ids:
+        for teacher in _student_subject_teachers(student):
+            services.create_notification(
+                recipient=teacher.user,
+                notification_type=Notification.Type.ATTENDANCE,
+                title_en="Student Absent",
+                title_ar="غياب طالب",
+                body_en=f"{student_name} was absent today from your class.",
+                body_ar=f"تغيّب {student_name} اليوم من حصتك.",
+                metadata=common_meta,
+                dedupe_key=f"absent_{student.id}_{date_str}_teacher_{teacher.id}",
+                student=student,
+            )
 
     # ── ADMINS ───────────────────────────────────────────────────────────────
     for admin_user in _admin_users():
@@ -374,7 +448,7 @@ def notify_new_student_report(sender, instance: Report, created, **kwargs):
     parent = getattr(student, "parent", None)
     if parent and getattr(parent, "user_id", None):
         recipients.append(parent.user)
-    for teacher in _class_teachers(student):
+    for teacher in _student_subject_teachers(student):
         recipients.append(teacher.user)
 
     for u in recipients:

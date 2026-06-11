@@ -19,6 +19,7 @@ from .serializers import AttendanceSerializer, AttendanceSessionSerializer
 from .face_recognition_client import get_face_recognition_client
 from students.models import Student
 from teachers.models import Teacher
+from notifications import services as notification_services
 from notifications.models import Notification
 
 
@@ -402,32 +403,28 @@ class AttendanceSessionViewSet(viewsets.ModelViewSet):
             )
         session.complete()
 
-        # Send absence notifications to parents
+        # Send absence notifications to parents (create_notification handles dedupe + MSSQL)
         absent_records = session.attendances.filter(status=Attendance.ABSENT).select_related('student__parent__user', 'student__user')
-        
-        notifications_to_create = []
         for att in absent_records:
             student = att.student
-            if student.parent and student.parent.user:
-                dedupe_key = f"att_session_{session.id}_absent_{student.id}"
-                # Ensure no duplicate notification
-                if not Notification.objects.filter(dedupe_key=dedupe_key).exists():
-                    student_name = student.user.get_full_name() or student.student_id
-                    notifications_to_create.append(Notification(
-                        recipient=student.parent.user,
-                        notification_type=Notification.Type.ATTENDANCE,
-                        title="Absence Alert",
-                        body=f"Your child {student_name} was absent today.",
-                        dedupe_key=dedupe_key,
-                        metadata={
-                            "session_id": session.id,
-                            "student_id": student.id,
-                            "date": str(session.date)
-                        }
-                    ))
-        
-        if notifications_to_create:
-            Notification.objects.bulk_create(notifications_to_create, ignore_conflicts=True)
+            parent = getattr(student, 'parent', None)
+            if parent and getattr(parent, 'user_id', None):
+                student_name = student.user.get_full_name() or student.student_id
+                notification_services.create_notification(
+                    recipient=parent.user,
+                    notification_type=Notification.Type.ATTENDANCE,
+                    title_en="Absence Alert",
+                    title_ar="تنبيه غياب",
+                    body_en=f"Your child {student_name} was absent today.",
+                    body_ar=f"تغيّب {student_name} اليوم.",
+                    dedupe_key=f"att_session_{session.id}_absent_{student.id}",
+                    metadata={
+                        "session_id": session.id,
+                        "student_id": student.id,
+                        "date": str(session.date),
+                    },
+                    student=student,
+                )
 
         return Response({'success': True, 'message': str(MSG_SESSION_COMPLETED), 'session': self.get_serializer(session).data})
 

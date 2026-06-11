@@ -289,10 +289,20 @@ def notify_at_risk(student, reason: str, absences: int, avg_pct: float | None):
             student=student,
         )
 
-    # ── TEACHERS assigned to the student's class ─────────────────────────────
-    school_class = getattr(student, "school_class", None)
-    if school_class:
-        for teacher in school_class.teachers.select_related("user").all():
+    # ── TEACHERS who teach the student's subjects ────────────────────────────
+    # Only notify teachers whose subjects overlap with the student's enrolled
+    # subjects — NOT all class teachers.
+    from teachers.models import Teacher
+
+    subjects = student.subjects.all()
+    if subjects:
+        teacher_qs = Teacher.objects.filter(
+            assigned_subjects__in=subjects,
+        ).select_related("user")
+        school_class = getattr(student, "school_class", None)
+        if school_class:
+            teacher_qs = teacher_qs.filter(assigned_classes=school_class)
+        for teacher in teacher_qs.distinct():
             if teacher.user_id:
                 create_notification(
                     recipient=teacher.user,

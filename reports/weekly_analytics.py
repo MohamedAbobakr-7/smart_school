@@ -36,12 +36,27 @@ def build_weekly_snapshot(
     """
     Build performance analytics, chart-ready payloads, and insight strings
     for the inclusive date range [week_start, week_end].
+
+    When *teacher* is provided the snapshot is scoped to that teacher's
+    assigned classes: only students belonging to those classes are included,
+    regardless of who created the exam or marked the attendance.
     """
-    att_qs = Attendance.objects.filter(date__gte=week_start, date__lte=week_end)
+    # ── Teacher class-scoped student visibility ─────────────────────
+    visible_student_ids: list[int] | None = None
+    teacher_class_pks: set[int] | None = None
     if teacher:
-        att_qs = att_qs.filter(
-            Q(marked_by=teacher) | Q(session__instructor=teacher)
-        )
+        teacher_class_pks = set(teacher.assigned_classes.values_list('id', flat=True))
+        visible_student_ids = list(
+            Student.objects.filter(school_class_id__in=teacher_class_pks)
+            .values_list('id', flat=True)
+        ) if teacher_class_pks else []
+
+    # ── Attendance ──────────────────────────────────────────────────
+    att_qs = Attendance.objects.filter(date__gte=week_start, date__lte=week_end)
+    if visible_student_ids is not None:
+        # Only attendance for students in the teacher's classes
+        # (empty list → no students visible → empty result, which is correct)
+        att_qs = att_qs.filter(student_id__in=visible_student_ids)
 
     total_att = att_qs.count()
     present = att_qs.filter(status=Attendance.PRESENT).count()
@@ -74,8 +89,11 @@ def build_weekly_snapshot(
         created_at__date__gte=week_start,
         created_at__date__lte=week_end,
     )
-    if teacher:
-        grade_qs = grade_qs.filter(exam__teacher=teacher)
+    if visible_student_ids is not None:
+        # Grades for students in the teacher's classes (regardless of exam owner)
+        # (empty list → no students visible → empty result, which is correct)
+        grade_qs = grade_qs.filter(student_id__in=visible_student_ids)
+        # Exams created by this teacher (still teacher-specific)
         exam_created_qs = exam_created_qs.filter(teacher=teacher)
 
     grades_count = grade_qs.count()
@@ -94,19 +112,40 @@ def build_weekly_snapshot(
         round(sum(by_subject[s]) / len(by_subject[s]), 2) for s in subject_labels
     ]
 
-    class_level_dist = (
-        Student.objects.filter(id__in=grade_qs.values_list("student_id", flat=True).distinct())
-        .values("class_level")
-        .annotate(c=Count("id"))
+    # Class breakdown — use SchoolClass.display_name for teacher scope,
+    # free-text class_level for school-wide scope.
+    graded_student_ids = list(
+        grade_qs.values_list("student_id", flat=True).distinct()
     )
-    class_breakdown = {row["class_level"] or "Unassigned": row["c"] for row in class_level_dist}
+    if teacher_class_pks is not None:
+        class_breakdown = {}
+        from classes.models import SchoolClass
+        for sc in SchoolClass.objects.filter(id__in=teacher_class_pks):
+            cnt = Student.objects.filter(
+                school_class=sc, id__in=graded_student_ids
+            ).count()
+            if cnt:
+                class_breakdown[sc.display_name] = cnt
+    else:
+        class_level_dist = (
+            Student.objects.filter(id__in=graded_student_ids)
+            .values("class_level")
+            .annotate(c=Count("id"))
+        )
+        class_breakdown = {
+            row["class_level"] or "Unassigned": row["c"]
+            for row in class_level_dist
+        }
 
     session_qs = AttendanceSession.objects.filter(
         date__gte=week_start,
         date__lte=week_end,
     )
-    if teacher:
-        session_qs = session_qs.filter(instructor=teacher)
+    if teacher_class_pks is not None:
+        # Sessions for the teacher's assigned classes (not just instructor=teacher)
+        session_qs = session_qs.filter(
+            Q(instructor=teacher) | Q(school_class_id__in=teacher_class_pks)
+        )
 
     session_stats = session_qs.aggregate(
         sessions=Count("id"),

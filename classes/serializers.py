@@ -15,6 +15,18 @@ class SchoolClassSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'display_name', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'name_en': {'required': False, 'allow_blank': True},
+            'name_ar': {'required': False, 'allow_blank': True},
+            'description_en': {'required': False, 'allow_blank': True},
+            'description_ar': {'required': False, 'allow_blank': True},
+        }
+        extra_kwargs = {
+            'name_en': {'required': False, 'allow_blank': True},
+            'name_ar': {'required': False, 'allow_blank': True},
+            'description_en': {'required': False, 'allow_blank': True},
+            'description_ar': {'required': False, 'allow_blank': True},
+        }
 
     def validate(self, data):
         name = data.get('name', getattr(self.instance, 'name', '')).strip()

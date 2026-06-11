@@ -82,7 +82,7 @@ class ParentViewSet(viewsets.ModelViewSet):
         try:
             from attendance.models import Attendance
             from exams.models import Grade
-            from notifications.models import Notification
+            from notifications.services import get_unread_count
 
             children = list(parent.children.select_related('user').all())
             children_count = len(children)
@@ -186,13 +186,7 @@ class ParentViewSet(viewsets.ModelViewSet):
             avg_attendance_rate = round(total_att_pct / att_count, 1) if att_count else None
             avg_score = round(total_score / score_count, 1) if score_count else None
 
-            # Unread notifications for this parent's user
-            try:
-                unread_notifications = Notification.objects.filter(
-                    recipient=user, is_read=False
-                ).count()
-            except Exception:
-                unread_notifications = 0
+            unread_notifications = get_unread_count(user)
 
             # Attendance trend
             attendance_trend = [

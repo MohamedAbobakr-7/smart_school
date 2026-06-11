@@ -23,6 +23,18 @@ class QuestionSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'text_en': {'required': False, 'allow_blank': True},
+            'text_ar': {'required': False, 'allow_blank': True},
+            'options_en': {'required': False},
+            'options_ar': {'required': False},
+        }
+        extra_kwargs = {
+            'text_en': {'required': False, 'allow_blank': True},
+            'text_ar': {'required': False, 'allow_blank': True},
+            'options_en': {'required': False},
+            'options_ar': {'required': False},
+        }
     
     def get_correct_answer_text(self, obj):
         """Get the text of the correct answer"""
@@ -77,6 +89,14 @@ class ExamSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'name_en': {'required': False, 'allow_blank': True},
+            'name_ar': {'required': False, 'allow_blank': True},
+        }
+        extra_kwargs = {
+            'name_en': {'required': False, 'allow_blank': True},
+            'name_ar': {'required': False, 'allow_blank': True},
+        }
     
     def get_questions_count(self, obj):
         """Get the number of questions in this exam"""

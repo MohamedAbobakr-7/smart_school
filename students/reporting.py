@@ -9,12 +9,16 @@ from collections import defaultdict
 from django.db.models import Count, Q
 
 
-def build_student_stats_list(students_qs, request):
+def build_student_stats_list(students_qs, request, teacher=None):
     """
     Build list of dicts consumed by Weekly Reports pages (attendance + grades).
 
     Each row includes: id, user, student_id, name, photo_url, class_id, class_name,
     present_att, total_att, attendance_pct, total_grade_pct, grade_count, avg_grade.
+
+    When *teacher* is provided, grades are scoped to that teacher's assigned subjects
+    so so the teacher's weekly report only reflects their own subject performance,
+    not grades from other teachers' exams.
     """
     from attendance.models import Attendance
     from exams.models import Grade
@@ -40,6 +44,14 @@ def build_student_stats_list(students_qs, request):
         .select_related('exam')
         .order_by()  # avoid ORDER BY leaking into aggregates on some DB backends
     )
+    # When a teacher is provided, only include grades from exams in the
+ # teacher's assigned subjects — so the weekly report reflects
+ # the teacher's own subject performance, not other teachers' subjects.
+    if teacher:
+        subject_ids = list(
+            teacher.assigned_subjects.values_list('id', flat=True)
+        )
+        grades_qs = grades_qs.filter(exam__subject_id__in=subject_ids)
     grade_lists: dict = defaultdict(list)
     for g in grades_qs:
         grade_lists[g.student_id].append(g)
