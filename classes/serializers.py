@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.conf import settings
+from django.utils import translation
 from smartSchool.messages import MSG_CLASS_NAME_REQUIRED, MSG_CLASS_ALREADY_EXISTS
 from .models import SchoolClass
 
@@ -15,12 +17,6 @@ class SchoolClassSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'display_name', 'created_at', 'updated_at']
-        extra_kwargs = {
-            'name_en': {'required': False, 'allow_blank': True},
-            'name_ar': {'required': False, 'allow_blank': True},
-            'description_en': {'required': False, 'allow_blank': True},
-            'description_ar': {'required': False, 'allow_blank': True},
-        }
         extra_kwargs = {
             'name_en': {'required': False, 'allow_blank': True},
             'name_ar': {'required': False, 'allow_blank': True},
@@ -44,4 +40,19 @@ class SchoolClassSerializer(serializers.ModelSerializer):
             )
         data['name'] = name
         data['section'] = section
+
+        # Sync the translation-proxy field values to the current language's
+        # real DB columns.  Without this, Django's Model.__init__ overwrites
+        # the descriptor-set value with the field default (None / '') because
+        # the concrete field name (e.g. name_en) was not in kwargs — or it
+        # was present but falsy (None / '') from DRF field-level validation.
+        lang = translation.get_language() or settings.LANGUAGE_CODE
+        name_lang_field = f'name_{lang}'
+        desc_lang_field = f'description_{lang}'
+        if name and not data.get(name_lang_field):
+            data[name_lang_field] = name
+        desc = data.get('description', getattr(self.instance, 'description', '')).strip()
+        if desc and not data.get(desc_lang_field):
+            data[desc_lang_field] = desc
+
         return data

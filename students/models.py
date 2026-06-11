@@ -26,7 +26,6 @@ class Student(models.Model):
     # Student identification
     student_id = models.CharField(
         max_length=50,
-        unique=True,
         null=True,
         blank=True,
         default=None,
@@ -108,6 +107,13 @@ class Student(models.Model):
             models.Index(fields=['class_level']),
             models.Index(fields=['class_id']),
             models.Index(fields=['parent']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student_id'],
+                name='student_id_unique_nonnull',
+                condition=models.Q(student_id__isnull=False),
+            ),
         ]
 
     def __str__(self):

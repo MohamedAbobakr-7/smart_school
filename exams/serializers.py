@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.conf import settings
+from django.utils import translation
 from smartSchool.messages import (
     MSG_OPTIONS_MUST_BE_LIST, MSG_MIN_OPTIONS,
     MSG_CORRECT_ANSWER_INDEX, MSG_GRADE_DUPLICATE,
@@ -29,12 +31,6 @@ class QuestionSerializer(serializers.ModelSerializer):
             'options_en': {'required': False},
             'options_ar': {'required': False},
         }
-        extra_kwargs = {
-            'text_en': {'required': False, 'allow_blank': True},
-            'text_ar': {'required': False, 'allow_blank': True},
-            'options_en': {'required': False},
-            'options_ar': {'required': False},
-        }
     
     def get_correct_answer_text(self, obj):
         """Get the text of the correct answer"""
@@ -59,6 +55,21 @@ class QuestionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 str(MSG_CORRECT_ANSWER_INDEX).format(index=correct_answer, count=len(options))
             )
+
+        # Sync translation-proxy fields to the current language's concrete
+        # DB columns so Django's Model.__init__ won't overwrite them with
+        # field defaults (None / '') when the concrete field name is absent
+        # from kwargs.
+        lang = translation.get_language() or settings.LANGUAGE_CODE
+        text = data.get('text', getattr(self.instance, 'text', '') if self.instance else '')
+        if text:
+            text_lang = f'text_{lang}'
+            if not data.get(text_lang):
+                data[text_lang] = text
+        if options:
+            options_lang = f'options_{lang}'
+            if not data.get(options_lang):
+                data[options_lang] = options
         
         return data
 
@@ -93,10 +104,6 @@ class ExamSerializer(serializers.ModelSerializer):
             'name_en': {'required': False, 'allow_blank': True},
             'name_ar': {'required': False, 'allow_blank': True},
         }
-        extra_kwargs = {
-            'name_en': {'required': False, 'allow_blank': True},
-            'name_ar': {'required': False, 'allow_blank': True},
-        }
     
     def get_questions_count(self, obj):
         """Get the number of questions in this exam"""
@@ -105,6 +112,19 @@ class ExamSerializer(serializers.ModelSerializer):
     def get_grades_count(self, obj):
         """Get the number of students who have taken this exam"""
         return obj.get_grades_count()
+
+    def validate(self, data):
+        # Sync translation-proxy fields to the current language's concrete
+        # DB columns so Django's Model.__init__ won't overwrite them with
+        # field defaults (None / '') when the concrete field name is absent
+        # from kwargs.
+        lang = translation.get_language() or settings.LANGUAGE_CODE
+        name = data.get('name', getattr(self.instance, 'name', '') if self.instance else '')
+        if name:
+            name_lang = f'name_{lang}'
+            if not data.get(name_lang):
+                data[name_lang] = name
+        return data
 
 
 class ExamDetailSerializer(ExamSerializer):

@@ -92,6 +92,22 @@ class StudentSerializer(serializers.ModelSerializer):
         grade_number = _extract_grade_number(obj.school_class)
         return get_subject_ids_for_grade(grade_number)
 
+    def validate_student_id(self, value):
+        """
+        Enforce uniqueness for non-null, non-empty student_id values.
+        Multiple NULL/blank values are allowed (SQL Server filtered unique index
+        handles this at the DB level, but we also need DRF-level validation).
+        """
+        if value and value.strip():
+            qs = Student.objects.filter(student_id=value.strip())
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError(
+                    f'A student with ID "{value.strip()}" already exists.'
+                )
+        return value
+
     def _auto_generate_id(self, school_class):
         """Generate a student ID using the utility function."""
         from .utils import generate_student_id

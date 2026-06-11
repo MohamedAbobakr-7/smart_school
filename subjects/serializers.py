@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.conf import settings
+from django.utils import translation
 from classes.models import SchoolClass
 from .models import Subject, Material
 
@@ -21,6 +23,24 @@ class SubjectSerializer(serializers.ModelSerializer):
             'description_en': {'required': False, 'allow_blank': True},
             'description_ar': {'required': False, 'allow_blank': True},
         }
+
+    def validate(self, data):
+        # Sync translation-proxy fields to the current language's concrete
+        # DB columns so Django's Model.__init__ won't overwrite them with
+        # field defaults (None / '') when the concrete field name is absent
+        # from kwargs.
+        lang = translation.get_language() or settings.LANGUAGE_CODE
+        name = data.get('name', getattr(self.instance, 'name', '') if self.instance else '')
+        if name:
+            name_lang = f'name_{lang}'
+            if not data.get(name_lang):
+                data[name_lang] = name
+        desc = data.get('description', getattr(self.instance, 'description', '') if self.instance else '')
+        if desc:
+            desc_lang = f'description_{lang}'
+            if not data.get(desc_lang):
+                data[desc_lang] = desc
+        return data
 
     def _get_teacher_name(self, item):
         """Extract teacher display name from either a TeacherSubjectClass or a Teacher object."""
@@ -80,6 +100,24 @@ class MaterialSerializer(serializers.ModelSerializer):
             'description_en': {'required': False, 'allow_blank': True},
             'description_ar': {'required': False, 'allow_blank': True},
         }
+
+    def validate(self, data):
+        # Sync translation-proxy fields to the current language's concrete
+        # DB columns so Django's Model.__init__ won't overwrite them with
+        # field defaults (None / '') when the concrete field name is absent
+        # from kwargs.
+        lang = translation.get_language() or settings.LANGUAGE_CODE
+        title = data.get('title', getattr(self.instance, 'title', '') if self.instance else '')
+        if title:
+            title_lang = f'title_{lang}'
+            if not data.get(title_lang):
+                data[title_lang] = title
+        desc = data.get('description', getattr(self.instance, 'description', '') if self.instance else '')
+        if desc:
+            desc_lang = f'description_{lang}'
+            if not data.get(desc_lang):
+                data[desc_lang] = desc
+        return data
 
     def get_target_classes_display(self, obj):
         return [
