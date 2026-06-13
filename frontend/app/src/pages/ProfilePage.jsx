@@ -146,7 +146,7 @@ export function ProfilePage() {
         <PageHeader title="My Profile" />
         <Card>
           <p className="muted">Could not load profile data.</p>
-          {error && <p style={{ color: '#ef4444' }}>{error}</p>}
+          {error && <p style={{ color: 'var(--ss-danger-bold)' }}>{error}</p>}
         </Card>
       </div>
     )

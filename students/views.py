@@ -33,6 +33,46 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete a student and its associated user account.
+
+        Overrides the default destroy to:
+        1. Suppress the SubjectEnrollment ↔ Student.subjects M2M sync signal
+           during CASCADE deletion (prevents ValueError / DoesNotExist).
+        2. Also delete the linked User so no orphaned account remains.
+        3. Handle any unexpected errors gracefully with a 500 response.
+        """
+        from subjects.models import _set_syncing_flag
+
+        student = self.get_object()
+        user = student.user
+
+        # Suppress M2M sync signals during CASCADE deletion
+        _set_syncing_flag(True)
+        try:
+            student.delete()
+        except Exception as exc:
+            logger.error("Error deleting student %s: %s", student.pk, exc)
+            _set_syncing_flag(False)
+            return Response(
+                {'detail': f'Failed to delete student: {exc}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        finally:
+            _set_syncing_flag(False)
+
+        # Delete the associated User (Student.user is OneToOne CASCADE from User→Student,
+        # but deleting Student does NOT auto-delete the User).
+        try:
+            user.delete()
+        except Exception as exc:
+            logger.warning("Student %s deleted but orphaned user %s could not be removed: %s",
+                           student.pk, user.pk, exc)
+            # Student is already gone; non-critical if user cleanup fails
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def get_permissions(self):
         if self.action in ['create', 'destroy', 'update', 'partial_update', 'register_face', 'backfill_ids']:
             return [IsAdminOrTeacher()]
@@ -45,8 +85,11 @@ class StudentViewSet(viewsets.ModelViewSet):
         qs = Student.objects.select_related('user', 'parent').prefetch_related('subjects')
 
         class_id = self.request.query_params.get('class_id')
+        school_class_id = self.request.query_params.get('school_class')
         parent_id = self.request.query_params.get('parent_id')
         subject_id = self.request.query_params.get('subject_id')
+        if school_class_id:
+            qs = qs.filter(school_class_id=school_class_id)
         if class_id:
             qs = qs.filter(class_id=class_id)
         if parent_id:

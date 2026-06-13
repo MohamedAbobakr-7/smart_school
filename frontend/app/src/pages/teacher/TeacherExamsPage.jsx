@@ -541,12 +541,12 @@ export function TeacherExamsPage() {
                         const isFailed = pct !== null && pct < 60
                         
                         return (
-                          <tr key={s.id} style={isFailed ? { backgroundColor: 'rgba(239, 68, 68, 0.05)' } : {}}>
+                          <tr key={s.id} style={isFailed ? { backgroundColor: 'var(--ss-danger-bg)' } : {}}>
                             <td>
                               {s.photo_url ? (
                                 <img src={s.photo_url} alt={s.student_id} className="student-table-avatar" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                               ) : (
-                                <div className="student-table-avatar student-table-avatar--empty" style={{ width: 32, height: 32, borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>📷</div>
+                                <div className="student-table-avatar student-table-avatar--empty" style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--ss-bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>📷</div>
                               )}
                             </td>
                             <td>{s.user_display_name || `Student #${s.id}`}</td>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { AttendanceCameraCapture } from '../components/attendance/AttendanceCameraCapture'
 import { Card } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
-import { apiFetch } from '../lib/api'
+import { apiFetch, apiFetchAll } from '../lib/api'
 import { useAuthStore } from '../stores/authStore'
 
 function truncate(value, size = 180) {
@@ -111,18 +111,13 @@ export function FeatureModulePage({
     const user = useAuthStore.getState().user
     const isTeacher = user?.role === 'TEACHER'
     try {
-      const [subjectsRes, studentsRes, classesRes] = await Promise.all([
+      const [subjectsRes, classesRes] = await Promise.all([
         apiFetch(isTeacher ? '/subjects/?my_subjects=true' : '/subjects/'),
-        apiFetch('/students/'),
         apiFetch(isTeacher ? '/classes/?my_classes=true' : '/classes/'),
       ])
       if (subjectsRes.ok) {
         const s = normalizeItems(await subjectsRes.json().catch(() => []))
         setSubjects(s)
-      }
-      if (studentsRes.ok) {
-        const list = normalizeItems(await studentsRes.json().catch(() => []))
-        setAttendanceStudents(list)
       }
       if (classesRes.ok) {
         const list = normalizeItems(await classesRes.json().catch(() => []))
@@ -130,6 +125,21 @@ export function FeatureModulePage({
       }
     } catch {
       // Non-blocking.
+    }
+  }
+
+  async function loadSessionStudents(session) {
+    if (!session?.school_class) {
+      setAttendanceStudents([])
+      setManualStudent('')
+      return
+    }
+    try {
+      const list = await apiFetchAll(`/students/?school_class=${session.school_class}`)
+      setAttendanceStudents(list)
+      setManualStudent('')
+    } catch {
+      setAttendanceStudents([])
     }
   }
 
@@ -142,7 +152,10 @@ export function FeatureModulePage({
         if (json.active && json.session) {
           setActiveSession(json.session)
           setAttendanceMsg(`Resuming active session #${json.session.id} — ${json.session.class_name}`)
-          await fetchRoster(json.session.id)
+          await Promise.all([
+            fetchRoster(json.session.id),
+            loadSessionStudents(json.session),
+          ])
         }
       }
     } catch {
@@ -193,8 +206,11 @@ export function FeatureModulePage({
       setActiveSession(json)
       setRoster({ present: [], absent: [] })
       setAttendanceMsg(`✅ Session #${json.id} started — ${json.class_name}`)
-      await load(attendanceEndpoint)
-      await fetchRoster(json.id)
+      await Promise.all([
+        load(attendanceEndpoint),
+        fetchRoster(json.id),
+        loadSessionStudents(json),
+      ])
     } catch (err) {
       setAttendanceMsg(err.message || 'Could not create session.')
     } finally {
@@ -219,6 +235,8 @@ export function FeatureModulePage({
       // session was already completed by another request).
       setActiveSession(null)
       setRoster({ present: [], absent: [] })
+      setAttendanceStudents([])
+      setManualStudent('')
       await fetchActiveSession()
       await load(attendanceEndpoint)
       setSessionBusy(false)
@@ -544,7 +562,7 @@ export function FeatureModulePage({
                   {attendanceStudents.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.student_id || `id ${s.id}`}
-                      {s.class_level ? ` — ${s.class_level}` : ''}
+                      {s.school_class_display ? ` — ${s.school_class_display}` : s.class_level ? ` — ${s.class_level}` : ''}
                     </option>
                   ))}
                 </select>

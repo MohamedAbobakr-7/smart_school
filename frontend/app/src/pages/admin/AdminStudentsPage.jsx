@@ -366,13 +366,13 @@ export function AdminStudentsPage() {
     if (!s.school_class) missing.push('Class')
 
     if (missing.length === 0) {
-      return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0' }}>Complete</span>
+      return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--ss-success-bg)', color: 'var(--ss-success-text)', border: '1px solid var(--ss-success-border)' }}>Complete</span>
     }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-start' }}>
         {missing.map((m) => (
-          <span key={m} style={{ padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>
+          <span key={m} style={{ padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, background: 'var(--ss-danger-bg)', color: 'var(--ss-danger-text)', border: '1px solid var(--ss-danger-border)' }}>
             Missing {m}
           </span>
         ))}
@@ -387,7 +387,7 @@ export function AdminStudentsPage() {
         subtitle="Manage all student profiles and accounts."
       />
 
-      {message && <div style={{ padding: '1rem', background: '#ecfdf5', color: '#065f46', borderRadius: '8px', border: '1px solid #a7f3d0', marginBottom: '1.5rem', fontWeight: 500 }}>{message}</div>}
+      {message && <div style={{ padding: '1rem', background: 'var(--ss-success-banner-bg)', color: 'var(--ss-success-banner-text)', borderRadius: '8px', border: '1px solid var(--ss-success-banner-border)', marginBottom: '1.5rem', fontWeight: 500 }}>{message}</div>}
 
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -397,12 +397,12 @@ export function AdminStudentsPage() {
               placeholder="Search by ID, name, email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #eaeaea', width: '300px', fontSize: '0.9rem' }}
+              style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--ss-border)', width: '300px', fontSize: '0.9rem' }}
             />
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #eaeaea', fontSize: '0.9rem', width: '200px' }}
+              style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--ss-border)', fontSize: '0.9rem', width: '200px' }}
             >
               <option value="all">All Classes</option>
               {classes.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
@@ -414,7 +414,7 @@ export function AdminStudentsPage() {
               onClick={handleBackfillIds}
               disabled={busy}
               title="Assign auto-generated IDs to all students with a blank Student ID"
-              style={{ border: '1px dashed #6366f1', color: '#6366f1', fontSize: '0.85rem' }}
+              style={{ border: '1px dashed var(--ss-primary)', color: 'var(--ss-primary)', fontSize: '0.85rem' }}
             >
               Generate ID
             </button>
@@ -429,16 +429,16 @@ export function AdminStudentsPage() {
 
         {/* Backfill Results Panel */}
         {backfillResult && backfillResult.updated > 0 ? (
-          <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px' }}>
+          <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'var(--ss-info-banner-bg)', border: '1px solid var(--ss-info-banner-border)', borderRadius: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <strong style={{ color: '#0369a1' }}>Generated {backfillResult.updated} student ID(s)</strong>
+              <strong style={{ color: 'var(--ss-info-banner-text)' }}>Generated {backfillResult.updated} student ID(s)</strong>
               <button type="button" className="btn btn-ghost btn-xs" onClick={() => setBackfillResult(null)}>✕ Close</button>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {backfillResult.students.map(s => (
-                <div key={s.id} style={{ padding: '0.4rem 0.8rem', background: '#fff', border: '1px solid #bae6fd', borderRadius: '6px', fontSize: '0.82rem' }}>
-                  <span style={{ fontWeight: 600, color: '#0369a1', fontFamily: 'monospace' }}>{s.student_id}</span>
-                  <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>→ {s.name}</span>
+                <div key={s.id} style={{ padding: '0.4rem 0.8rem', background: 'var(--ss-bg-card)', border: '1px solid var(--ss-info-banner-border)', borderRadius: '6px', fontSize: '0.82rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--ss-info-banner-text)', fontFamily: 'monospace' }}>{s.student_id}</span>
+                  <span style={{ color: 'var(--ss-text-muted)', marginLeft: '0.5rem' }}>→ {s.name}</span>
                 </div>
               ))}
             </div>
@@ -465,7 +465,7 @@ export function AdminStudentsPage() {
                 <tbody>
                   {paginatedStudents.length === 0 ? (
                     <tr>
-                      <td colSpan="9" style={{ textAlign: 'center', padding: '3rem 1rem', color: '#6b7280' }}>
+                      <td colSpan="9" style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--ss-text-muted)' }}>
                         No students found.
                       </td>
                     </tr>
@@ -479,9 +479,9 @@ export function AdminStudentsPage() {
                         <tr key={s.id}>
                           <td>
                             {s.photo_url ? (
-                              <img src={s.photo_url} alt="Profile" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #eaeaea' }} />
+                              <img src={s.photo_url} alt="Profile" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--ss-border)' }} />
                             ) : (
-                              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
+                              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--ss-bg-active)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
                             )}
                           </td>
                           <td>
@@ -500,7 +500,7 @@ export function AdminStudentsPage() {
                           <td>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                               <button className="btn btn-ghost btn-xs" onClick={() => startEdit(s)}>Edit</button>
-                              <button className="btn btn-ghost btn-xs" style={{ color: '#dc2626' }} onClick={() => deleteStudent(s)}>Delete</button>
+                              <button className="btn btn-ghost btn-xs" style={{ color: 'var(--ss-danger-bold)' }} onClick={() => deleteStudent(s)}>Delete</button>
                             </div>
                           </td>
                         </tr>
@@ -513,8 +513,8 @@ export function AdminStudentsPage() {
 
             {/* Pagination Controls */}
             {pageCount > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #eaeaea' }}>
-                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--ss-border)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>
                   Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} students
                 </span>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -529,8 +529,8 @@ export function AdminStudentsPage() {
 
       {/* --- CREATE MODAL --- */}
       {showCreateModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--ss-modal-overlay)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--ss-bg-card)', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: 'var(--ss-modal-shadow)' }}>
             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Create New Student</h2>
             <form onSubmit={handleCreateStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -578,17 +578,17 @@ export function AdminStudentsPage() {
                   {createPhotoPreview ? (
                     <img src={createPhotoPreview} alt="Preview" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                    <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'var(--ss-bg-active)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <input id="create-photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handlePhotoChange(e.target.files[0], setCreatePhotoFile, setCreatePhotoPreview)} />
-                    <label htmlFor="create-photo" className="btn btn-ghost btn-xs" style={{ cursor: 'pointer', alignSelf: 'flex-start', background: '#eaeaea' }}>Choose Photo</label>
-                    {createPhotoFile && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{createPhotoFile.name}</span>}
+                    <label htmlFor="create-photo" className="btn btn-ghost btn-xs" style={{ cursor: 'pointer', alignSelf: 'flex-start', background: 'var(--ss-border)' }}>Choose Photo</label>
+                    {createPhotoFile && <span style={{ fontSize: '0.75rem', color: 'var(--ss-text-muted)' }}>{createPhotoFile.name}</span>}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eaeaea' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--ss-border)' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving...' : 'Create Student'}</button>
               </div>
@@ -599,8 +599,8 @@ export function AdminStudentsPage() {
 
       {/* --- EDIT MODAL --- */}
       {editing && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--ss-modal-overlay)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--ss-bg-card)', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: 'var(--ss-modal-shadow)' }}>
             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Edit Student{editing.student_id ? `: ${editing.student_id}` : ''}</h2>
             <form onSubmit={saveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -610,7 +610,7 @@ export function AdminStudentsPage() {
                   <input required className="login-input login-input--plain" value={editName} onChange={e => setEditName(e.target.value)} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Student ID <span style={{ fontWeight: 400, color: '#9ca3af' }}>(clear field, save, then use Generate ID)</span></label>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Student ID <span style={{ fontWeight: 400, color: 'var(--ss-text-faint)' }}>(clear field, save, then use Generate ID)</span></label>
                   <input
                     className="login-input login-input--plain"
                     value={editStudentId}
@@ -627,7 +627,7 @@ export function AdminStudentsPage() {
                   <input type="email" required className="login-input login-input--plain" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>New Password <span style={{ fontWeight: 400, color: '#9ca3af' }}>(leave blank to keep)</span></label>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>New Password <span style={{ fontWeight: 400, color: 'var(--ss-text-faint)' }}>(leave blank to keep)</span></label>
                   <input type="password" className="login-input login-input--plain" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="••••••••" />
                 </div>
               </div>
@@ -660,17 +660,17 @@ export function AdminStudentsPage() {
                   {editPhotoPreview ? (
                     <img src={editPhotoPreview} alt="Preview" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
+                    <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'var(--ss-bg-active)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📷</div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <input id="edit-photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handlePhotoChange(e.target.files[0], setEditPhotoFile, setEditPhotoPreview)} />
-                    <label htmlFor="edit-photo" className="btn btn-ghost btn-xs" style={{ cursor: 'pointer', alignSelf: 'flex-start', background: '#eaeaea' }}>Choose New Photo</label>
-                    {editPhotoFile && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{editPhotoFile.name}</span>}
+                    <label htmlFor="edit-photo" className="btn btn-ghost btn-xs" style={{ cursor: 'pointer', alignSelf: 'flex-start', background: 'var(--ss-border)' }}>Choose New Photo</label>
+                    {editPhotoFile && <span style={{ fontSize: '0.75rem', color: 'var(--ss-text-muted)' }}>{editPhotoFile.name}</span>}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eaeaea' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--ss-border)' }}>
                 <button type="button" className="btn btn-ghost" onClick={cancelEdit}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving...' : 'Save Changes'}</button>
               </div>

@@ -303,7 +303,7 @@ export function AdminParentsPage() {
         subtitle="Manage parent profiles and link them to one or more student children."
       />
 
-      {message && <div style={{ padding: '1rem', background: '#ecfdf5', color: '#065f46', borderRadius: '8px', border: '1px solid #a7f3d0', marginBottom: '1.5rem', fontWeight: 500 }}>{message}</div>}
+      {message && <div style={{ padding: '1rem', background: 'var(--ss-success-banner-bg)', color: 'var(--ss-success-banner-text)', borderRadius: '8px', border: '1px solid var(--ss-success-banner-border)', marginBottom: '1.5rem', fontWeight: 500 }}>{message}</div>}
 
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -313,7 +313,7 @@ export function AdminParentsPage() {
               placeholder="Search by ID, name, email, occupation..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #eaeaea', width: '300px', fontSize: '0.9rem' }}
+              style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--ss-border)', width: '300px', fontSize: '0.9rem' }}
             />
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
@@ -342,7 +342,7 @@ export function AdminParentsPage() {
                 <tbody>
                   {paginatedParents.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', padding: '3rem 1rem', color: '#6b7280' }}>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--ss-text-muted)' }}>
                         No parents found.
                       </td>
                     </tr>
@@ -366,7 +366,7 @@ export function AdminParentsPage() {
                             {children.length ? (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                                 {children.map((s) => (
-                                  <span key={s.id} style={{ padding: '0.15rem 0.5rem', background: '#f4f4f5', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #eaeaea' }}>
+                                  <span key={s.id} style={{ padding: '0.15rem 0.5rem', background: 'var(--ss-bg-active)', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid var(--ss-border)' }}>
                                     {s.student_id || `#${s.id}`}
                                   </span>
                                 ))}
@@ -378,7 +378,7 @@ export function AdminParentsPage() {
                           <td>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                               <button className="btn btn-ghost btn-xs" onClick={() => startEdit(p)}>Edit</button>
-                              <button className="btn btn-ghost btn-xs" style={{ color: '#dc2626' }} onClick={() => deleteParent(p)}>Delete</button>
+                              <button className="btn btn-ghost btn-xs" style={{ color: 'var(--ss-danger-bold)' }} onClick={() => deleteParent(p)}>Delete</button>
                             </div>
                           </td>
                         </tr>
@@ -390,8 +390,8 @@ export function AdminParentsPage() {
             </div>
 
             {pageCount > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #eaeaea' }}>
-                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--ss-border)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>
                   Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} parents
                 </span>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -406,8 +406,8 @@ export function AdminParentsPage() {
 
       {/* CREATE MODAL */}
       {showCreateModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--ss-modal-overlay)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--ss-bg-card)', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: 'var(--ss-modal-shadow)' }}>
             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Create New Parent</h2>
             <form onSubmit={createParent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -446,7 +446,7 @@ export function AdminParentsPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Link Students (Children)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #eaeaea', maxHeight: '150px', overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'var(--ss-bg-main)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--ss-border)', maxHeight: '150px', overflowY: 'auto' }}>
                   {students.length === 0 && <span className="muted">No students.</span>}
                   {students.map((s) => {
                     const u = userById.get(s.user)
@@ -460,7 +460,7 @@ export function AdminParentsPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eaeaea' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--ss-border)' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving...' : 'Create Parent'}</button>
               </div>
@@ -471,8 +471,8 @@ export function AdminParentsPage() {
 
       {/* EDIT MODAL */}
       {editing && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--ss-modal-overlay)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--ss-bg-card)', borderRadius: '16px', width: 'min(600px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: 'var(--ss-modal-shadow)' }}>
             <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem' }}>Edit Parent: {editing.parent_id}</h2>
             <form onSubmit={saveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -493,7 +493,7 @@ export function AdminParentsPage() {
                   <input type="email" required className="login-input login-input--plain" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>New Password <span style={{ fontWeight: 400, color: '#9ca3af' }}>(leave blank to keep)</span></label>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>New Password <span style={{ fontWeight: 400, color: 'var(--ss-text-faint)' }}>(leave blank to keep)</span></label>
                   <input type="password" className="login-input login-input--plain" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="••••••••" />
                 </div>
               </div>
@@ -511,7 +511,7 @@ export function AdminParentsPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: 500 }}>Link Students (Children)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #eaeaea', maxHeight: '150px', overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'var(--ss-bg-main)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--ss-border)', maxHeight: '150px', overflowY: 'auto' }}>
                   {students.length === 0 && <span className="muted">No students.</span>}
                   {students.map((s) => {
                     const u = userById.get(s.user)
@@ -525,7 +525,7 @@ export function AdminParentsPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #eaeaea' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--ss-border)' }}>
                 <button type="button" className="btn btn-ghost" onClick={cancelEdit}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving...' : 'Save Changes'}</button>
               </div>

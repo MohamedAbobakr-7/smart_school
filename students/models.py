@@ -1,8 +1,12 @@
+import logging
+
 from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 import os
+
+logger = logging.getLogger(__name__)
 
 
 class Student(models.Model):
@@ -127,6 +131,15 @@ def auto_delete_photo_on_delete(sender, instance, **kwargs):
     when corresponding `Student` object is deleted.
     """
     if instance.photo:
-        if os.path.isfile(instance.photo.path):
-            os.remove(instance.photo.path)
+        try:
+            photo_path = instance.photo.path
+            if os.path.isfile(photo_path):
+                os.remove(photo_path)
+        except (ValueError, FileNotFoundError, OSError) as exc:
+            # ValueError: photo.path raises if the field has no file
+            # FileNotFoundError / OSError: file missing on disk
+            logger.warning(
+                "Could not delete photo file for Student %s: %s",
+                instance.pk, exc,
+            )
 

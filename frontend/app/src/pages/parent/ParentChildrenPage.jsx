@@ -94,9 +94,9 @@ export function ParentChildrenPage() {
                   ) : (
                     <div style={{ 
                       width: '60px', height: '60px', borderRadius: '50%', 
-                      background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1',
+                      background: 'var(--ss-primary-light)', color: 'var(--ss-primary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '1.5rem', fontWeight: 'bold', border: '2px solid rgba(99, 102, 241, 0.2)'
+                      fontSize: '1.5rem', fontWeight: 'bold', border: '2px solid var(--ss-primary-border)'
                     }}>
                       {getInitials(childName)}
                     </div>
@@ -106,7 +106,7 @@ export function ParentChildrenPage() {
                     <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.1rem', color: 'var(--text-color)' }}>
                       {childName}
                     </h3>
-                    <div style={{ fontSize: '0.85rem', color: '#6b7280', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--ss-text-muted)', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
                       <span>ID: {child.student_id}</span>
                       <span>Class: {classLabel}</span>
                     </div>

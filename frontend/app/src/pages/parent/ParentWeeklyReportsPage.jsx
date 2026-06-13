@@ -11,18 +11,18 @@ function parseList(payload) {
 
 function getStatusColor(status) {
   switch (status?.toLowerCase()) {
-    case 'present': return '#10b981'
-    case 'absent': return '#ef4444'
-    case 'late': return '#f97316'
-    default: return '#6b7280'
+    case 'present': return 'var(--ss-status-present)'
+    case 'absent': return 'var(--ss-status-absent)'
+    case 'late': return 'var(--ss-status-late)'
+    default: return 'var(--ss-text-muted)'
   }
 }
 
 function getGradeColor(pct) {
-  if (pct == null) return '#6b7280'
-  if (pct >= 85) return '#10b981'
-  if (pct >= 60) return '#f97316'
-  return '#ef4444'
+  if (pct == null) return 'var(--ss-text-muted)'
+  if (pct >= 85) return 'var(--ss-success-bold)'
+  if (pct >= 60) return 'var(--ss-warning-bold)'
+  return 'var(--ss-danger-bold)'
 }
 
 function formatPct(v) {
@@ -48,11 +48,11 @@ function StatBadge({ label, value, color }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      background: 'var(--bg-hover, #f1f5f9)', borderRadius: '12px',
+      background: 'var(--ss-bg-hover)', borderRadius: '12px',
       padding: '0.85rem 1.25rem', minWidth: '110px', flex: 1
     }}>
-      <span style={{ fontSize: '1.5rem', fontWeight: 700, color: color || '#6366f1' }}>{value}</span>
-      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6b7280)', marginTop: '0.2rem' }}>{label}</span>
+      <span style={{ fontSize: '1.5rem', fontWeight: 700, color: color || 'var(--ss-primary)' }}>{value}</span>
+      <span style={{ fontSize: '0.75rem', color: 'var(--ss-text-muted)', marginTop: '0.2rem' }}>{label}</span>
     </div>
   )
 }
@@ -198,9 +198,9 @@ export function ParentWeeklyReportsPage() {
                     style={{
                       padding: '0.45rem 1.1rem',
                       borderRadius: '999px',
-                      border: isActive ? 'none' : '1px solid var(--border-color, #eaeaea)',
-                      background: isActive ? '#6366f1' : 'var(--bg-card, #fff)',
-                      color: isActive ? '#fff' : 'var(--text-muted, #6b7280)',
+                      border: isActive ? 'none' : '1px solid var(--ss-border)',
+                      background: isActive ? 'var(--ss-primary)' : 'var(--ss-bg-card)',
+                      color: isActive ? 'var(--ss-text-on-primary)' : 'var(--ss-text-muted)',
                       fontWeight: 600,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
@@ -217,10 +217,10 @@ export function ParentWeeklyReportsPage() {
           {/* KPI Summary Row */}
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             <StatBadge label="Attendance Rate" value={formatPct(attStats.pct)} color={getGradeColor(attStats.pct)} />
-            <StatBadge label="Sessions Present" value={attStats.present} color="#10b981" />
-            <StatBadge label="Sessions Absent" value={attStats.absent} color="#ef4444" />
+            <StatBadge label="Sessions Present" value={attStats.present} color="var(--ss-success-bold)" />
+            <StatBadge label="Sessions Absent" value={attStats.absent} color="var(--ss-danger-bold)" />
             <StatBadge label="Avg Grade" value={formatPct(gradeStats.avg)} color={getGradeColor(gradeStats.avg)} />
-            <StatBadge label="Grades Recorded" value={gradeStats.count} color="#6366f1" />
+            <StatBadge label="Grades Recorded" value={gradeStats.count} color="var(--ss-primary)" />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -233,12 +233,12 @@ export function ParentWeeklyReportsPage() {
                   {recentAtt.map((a) => (
                     <li key={a.id} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '0.6rem 0', borderBottom: '1px solid var(--border-color, #eaeaea)',
+                      padding: '0.6rem 0', borderBottom: '1px solid var(--ss-border)',
                       fontSize: '0.9rem'
                     }}>
-                      <span style={{ color: 'var(--text-secondary, #374151)' }}>
+                      <span style={{ color: 'var(--ss-text-secondary)' }}>
                         {a.date}
-                        {a.subject_name ? <span style={{ color: 'var(--text-muted, #6b7280)', marginLeft: '0.5rem', fontSize: '0.8rem' }}>· {a.subject_name}</span> : null}
+                        {a.subject_name ? <span style={{ color: 'var(--ss-text-muted)', marginLeft: '0.5rem', fontSize: '0.8rem' }}>· {a.subject_name}</span> : null}
                       </span>
                       <span style={{
                         fontWeight: 600,
@@ -270,21 +270,21 @@ export function ParentWeeklyReportsPage() {
                     return (
                       <li key={g.id} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '0.6rem 0', borderBottom: '1px solid var(--border-color, #eaeaea)',
+                        padding: '0.6rem 0', borderBottom: '1px solid var(--ss-border)',
                         fontSize: '0.9rem'
                       }}>
                         <div>
-                          <span style={{ fontWeight: 600, color: 'var(--text-main, #111827)' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--ss-text)' }}>
                             {g.exam_title || g.exam_name || `Exam #${g.exam}`}
                           </span>
                           {g.subject_name && (
-                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #6b7280)', marginLeft: '0.5rem' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--ss-text-muted)', marginLeft: '0.5rem' }}>
                               · {g.subject_name}
                             </span>
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ color: 'var(--text-secondary, #374151)', fontSize: '0.85rem' }}>
+                          <span style={{ color: 'var(--ss-text-secondary)', fontSize: '0.85rem' }}>
                             {g.score}/{g.total_grade || g.total_questions || g.max_score || '—'}
                           </span>
                           <span style={{

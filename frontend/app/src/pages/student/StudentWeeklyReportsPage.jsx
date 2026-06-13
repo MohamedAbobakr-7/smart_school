@@ -14,6 +14,7 @@ import {
 import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { apiFetch } from '../../lib/api'
+import { useChartColors } from '../../hooks/useChartColors'
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -23,10 +24,10 @@ function formatPct(v) {
 }
 
 function getGradeColor(pct) {
-  if (pct == null) return '#6b7280'
-  if (pct >= 85) return '#10b981'
-  if (pct >= 60) return '#f97316'
-  return '#ef4444'
+  if (pct == null) return 'var(--ss-text-muted)'
+  if (pct >= 85) return 'var(--ss-success-bold)'
+  if (pct >= 60) return 'var(--ss-warning-bold)'
+  return 'var(--ss-danger-bold)'
 }
 
 function getInsightIcon(level) {
@@ -39,9 +40,9 @@ function getInsightIcon(level) {
 
 function getInsightColor(level) {
   switch (level) {
-    case 'positive': return '#10b981'
-    case 'warning':  return '#ef4444'
-    default:         return '#6366f1'
+    case 'positive': return 'var(--ss-success-bold)'
+    case 'warning':  return 'var(--ss-danger-bold)'
+    default:         return 'var(--ss-primary)'
   }
 }
 
@@ -61,11 +62,11 @@ function StatBadge({ label, value, color }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      background: 'var(--bg-hover, #f1f5f9)', borderRadius: '12px',
+      background: 'var(--ss-bg-hover)', borderRadius: '12px',
       padding: '0.85rem 1.25rem', minWidth: '110px', flex: 1,
     }}>
-      <span style={{ fontSize: '1.5rem', fontWeight: 700, color: color || '#6366f1' }}>{value}</span>
-      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6b7280)', marginTop: '0.2rem' }}>{label}</span>
+      <span style={{ fontSize: '1.5rem', fontWeight: 700, color: color || 'var(--ss-primary)' }}>{value}</span>
+      <span style={{ fontSize: '0.75rem', color: 'var(--ss-text-muted)', marginTop: '0.2rem' }}>{label}</span>
     </div>
   )
 }
@@ -74,7 +75,7 @@ function InsightItem({ level, text }) {
   return (
     <li style={{
       display: 'flex', alignItems: 'flex-start', gap: '0.6rem',
-      padding: '0.55rem 0', borderBottom: '1px solid var(--border-color, #eaeaea)',
+      padding: '0.55rem 0', borderBottom: '1px solid var(--ss-border)',
       fontSize: '0.9rem',
     }}>
       <span style={{ fontSize: '1rem', flexShrink: 0 }}>{getInsightIcon(level)}</span>
@@ -100,7 +101,7 @@ function WeekPicker({ weekStart, weekEnd, onPrev, onNext, canGoNext }) {
       </button>
       <span style={{
         fontWeight: 600, fontSize: '0.95rem',
-        color: 'var(--text-main, #111827)',
+        color: 'var(--ss-text)',
       }}>
         {weekStart} → {weekEnd}
       </span>
@@ -119,6 +120,7 @@ function WeekPicker({ weekStart, weekEnd, onPrev, onNext, canGoNext }) {
 /* ── main component ──────────────────────────────────────────────────────── */
 
 export function StudentWeeklyReportsPage() {
+  const colors = useChartColors()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [data, setData] = useState(null)
@@ -234,14 +236,14 @@ export function StudentWeeklyReportsPage() {
               value={formatPct(attStats.rate_percent)}
               color={getGradeColor(attStats.rate_percent)}
             />
-            <StatBadge label="Present" value={attStats.present || 0} color="#10b981" />
-            <StatBadge label="Absent" value={attStats.absent || 0} color="#ef4444" />
+            <StatBadge label="Present" value={attStats.present || 0} color="var(--ss-success-bold)" />
+            <StatBadge label="Absent" value={attStats.absent || 0} color="var(--ss-danger-bold)" />
             <StatBadge
               label="Avg Score"
               value={formatPct(acadStats.avg_score_percent)}
               color={getGradeColor(acadStats.avg_score_percent)}
             />
-            <StatBadge label="Grades" value={acadStats.grades_count || 0} color="#6366f1" />
+            <StatBadge label="Grades" value={acadStats.grades_count || 0} color="var(--ss-primary)" />
           </div>
 
           {/* Charts */}
@@ -257,8 +259,8 @@ export function StudentWeeklyReportsPage() {
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={60} tickMargin={15} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="Present" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={48} />
-                    <Bar dataKey="Absent" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                    <Bar dataKey="Present" fill={colors.successBold} radius={[4, 4, 0, 0]} maxBarSize={48} />
+                    <Bar dataKey="Absent" fill={colors.dangerBold} radius={[4, 4, 0, 0]} maxBarSize={48} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -277,7 +279,7 @@ export function StudentWeeklyReportsPage() {
                         <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
                         <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} interval={0} />
                         <Tooltip content={<ChartTooltip />} />
-                        <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={36} />
+                        <Bar dataKey="value" fill={colors.barFill} radius={[0, 4, 4, 0]} maxBarSize={36} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

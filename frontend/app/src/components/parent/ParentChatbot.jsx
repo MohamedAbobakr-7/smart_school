@@ -92,10 +92,10 @@ export function ParentChatbot() {
           width: '60px',
           height: '60px',
           borderRadius: '50%',
-          background: '#6366f1',
-          color: 'white',
+          background: 'var(--ss-primary)',
+          color: 'var(--ss-text-on-primary)',
           border: 'none',
-          boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+          boxShadow: 'var(--ss-primary-shadow)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -118,10 +118,10 @@ export function ParentChatbot() {
       right: '2rem',
       width: '350px',
       height: '500px',
-      background: 'var(--bg)',
+      background: 'var(--ss-bg-main)',
       borderRadius: '16px',
       boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-      border: '1px solid var(--border-color)',
+      border: '1px solid var(--ss-border)',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 1000,
@@ -129,8 +129,8 @@ export function ParentChatbot() {
     }}>
       {/* Header */}
       <div style={{
-        background: '#6366f1',
-        color: 'white',
+        background: 'var(--ss-primary)',
+        color: 'var(--ss-text-on-primary)',
         padding: '1rem',
         display: 'flex',
         justifyContent: 'space-between',
@@ -161,7 +161,7 @@ export function ParentChatbot() {
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
-        background: 'var(--bg)'
+        background: 'var(--ss-bg-main)'
       }}>
         {messages.map((m, i) => {
           const isBot = m.sender === 'bot'
@@ -171,9 +171,9 @@ export function ParentChatbot() {
                 maxWidth: '80%',
                 padding: '0.75rem 1rem',
                 borderRadius: '12px',
-                background: isBot ? 'var(--code-bg)' : '#6366f1',
-                color: isBot ? 'var(--text-h)' : 'white',
-                border: isBot ? '1px solid var(--border)' : 'none',
+                background: isBot ? 'var(--ss-bg-hover)' : 'var(--ss-primary)',
+                color: isBot ? 'var(--ss-text)' : 'var(--ss-text-on-primary)',
+                border: isBot ? '1px solid var(--ss-border)' : 'none',
                 fontSize: '0.9rem',
                 lineHeight: 1.4
               }}>
@@ -184,7 +184,7 @@ export function ParentChatbot() {
         })}
         {loading && (
           <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <div style={{ padding: '0.75rem 1rem', borderRadius: '12px', background: 'var(--code-bg)', border: '1px solid var(--border)', fontSize: '0.9rem', color: '#9ca3af' }}>
+            <div style={{ padding: '0.75rem 1rem', borderRadius: '12px', background: 'var(--ss-bg-hover)', border: '1px solid var(--ss-border)', fontSize: '0.9rem', color: 'var(--ss-text-muted)' }}>
               Thinking...
             </div>
           </div>
@@ -195,32 +195,32 @@ export function ParentChatbot() {
       {/* Quick Actions */}
       <div style={{
         padding: '1rem',
-        borderTop: '1px solid var(--border-color)',
+        borderTop: '1px solid var(--ss-border)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.5rem',
-        background: 'var(--bg)'
+        background: 'var(--ss-bg-main)'
       }}>
-        <p style={{ margin: '0 0 0.25rem', fontSize: '0.8rem', color: '#6b7280', fontWeight: 600 }}>Ask a question:</p>
+        <p style={{ margin: '0 0 0.25rem', fontSize: '0.8rem', color: 'var(--ss-text-muted)', fontWeight: 600 }}>Ask a question:</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           <button 
             disabled={loading}
             onClick={() => handleQuestion('attendance')}
-            style={{ padding: '0.5rem 0.75rem', borderRadius: '20px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-color)' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: '20px', border: '1px solid var(--ss-border)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--ss-text)' }}
           >
             Show attendance
           </button>
           <button 
             disabled={loading}
             onClick={() => handleQuestion('grades')}
-            style={{ padding: '0.5rem 0.75rem', borderRadius: '20px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-color)' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: '20px', border: '1px solid var(--ss-border)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--ss-text)' }}
           >
             Show grades
           </button>
           <button 
             disabled={loading}
             onClick={() => handleQuestion('absences')}
-            style={{ padding: '0.5rem 0.75rem', borderRadius: '20px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-color)' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: '20px', border: '1px solid var(--ss-border)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--ss-text)' }}
           >
             Any absences?
           </button>

@@ -168,7 +168,7 @@ export function TeacherStudentsPage() {
       {!loading && error ? <p className="teaching-error">{error}</p> : null}
 
       {!loading && !error && myClassObjects.length === 0 && (
-        <div style={{ padding: '3rem', textAlign: 'center', background: '#fafafa', borderRadius: '12px', border: '1px dashed #eaeaea' }}>
+        <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--ss-bg-main)', borderRadius: '12px', border: '1px dashed var(--ss-border)' }}>
           <p className="muted" style={{ fontSize: '1.1rem' }}>
             No classes have been assigned to you yet. Please contact an administrator.
           </p>
@@ -187,23 +187,23 @@ export function TeacherStudentsPage() {
                 style={{
                   padding: '1.5rem',
                   borderRadius: '12px',
-                  border: isActive ? '1px solid #000' : '1px solid #eaeaea',
-                  background: isActive ? '#fafafa' : '#fff',
+                  border: isActive ? '1px solid var(--ss-text)' : '1px solid var(--ss-border)',
+                  background: isActive ? 'var(--ss-bg-main)' : 'var(--ss-bg-card)',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.05)' : '0 2px 4px rgba(0,0,0,0.02)',
                 }}
               >
-                <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', color: isActive ? '#000' : '#111827' }}>{c.name}</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: '#6b7280' }}>
+                <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', color: isActive ? 'var(--ss-text)' : 'var(--ss-text)' }}>{c.name}</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>
                   <span style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Students:</span> <strong style={{ color: '#111827' }}>{st.count}</strong>
+                    <span>Students:</span> <strong style={{ color: 'var(--ss-text)' }}>{st.count}</strong>
                   </span>
                   <span style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Avg Attendance:</span> <strong style={{ color: '#111827' }}>{formatPct(st.avgAtt)}</strong>
+                    <span>Avg Attendance:</span> <strong style={{ color: 'var(--ss-text)' }}>{formatPct(st.avgAtt)}</strong>
                   </span>
                   <span style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Avg Grade:</span> <strong style={{ color: '#111827' }}>{formatPct(st.avgGrade)}</strong>
+                    <span>Avg Grade:</span> <strong style={{ color: 'var(--ss-text)' }}>{formatPct(st.avgGrade)}</strong>
                   </span>
                 </div>
               </div>
@@ -288,7 +288,7 @@ export function TeacherStudentsPage() {
       )}
 
       {!loading && !error && myClassObjects.length > 0 && !selectedClassId && (
-        <div style={{ padding: '3rem', textAlign: 'center', background: '#fafafa', borderRadius: '12px', border: '1px dashed #eaeaea' }}>
+        <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--ss-bg-main)', borderRadius: '12px', border: '1px dashed var(--ss-border)' }}>
           <p className="muted" style={{ fontSize: '1.1rem' }}>Please select a class card above to view your students.</p>
         </div>
       )}

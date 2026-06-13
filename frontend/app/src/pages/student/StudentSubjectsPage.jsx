@@ -51,10 +51,10 @@ function getSubjectIcon(name) {
 }
 
 const EXAM_TYPE_BADGES = {
-  quiz: { label: 'Quiz', color: '#3b82f6', bg: '#dbeafe' },
-  midterm: { label: 'Midterm', color: '#f59e0b', bg: '#fef3c7' },
-  final: { label: 'Final', color: '#ef4444', bg: '#fee2e2' },
-  assignment: { label: 'Assignment', color: '#10b981', bg: '#d1fae5' },
+  quiz: { label: 'Quiz', color: 'var(--ss-info-bold)', bg: 'var(--ss-info-bg)' },
+  midterm: { label: 'Midterm', color: 'var(--ss-warning-bold)', bg: 'var(--ss-warning-bg)' },
+  final: { label: 'Final', color: 'var(--ss-danger-bold)', bg: 'var(--ss-danger-bg)' },
+  assignment: { label: 'Assignment', color: 'var(--ss-success-bold)', bg: 'var(--ss-success-bg)' },
 }
 
 function formatExamDate(dateStr) {
@@ -142,7 +142,7 @@ export function StudentSubjectsPage() {
           <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>📚</div>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem' }}>No subjects enrolled</h3>
-            <p style={{ color: '#6b7280', margin: 0 }}>
+            <p style={{ color: 'var(--ss-text-muted)', margin: 0 }}>
               You haven't been enrolled in any subjects yet. Contact your school administrator.
             </p>
           </div>
@@ -156,10 +156,10 @@ export function StudentSubjectsPage() {
                 <div
                   key={s.id}
                   style={{
-                    border: '1px solid #eaeaea',
+                    border: '1px solid var(--ss-border)',
                     borderRadius: '12px',
                     padding: '1.25rem',
-                    background: '#fafafa',
+                    background: 'var(--ss-bg-main)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.75rem',
@@ -176,7 +176,7 @@ export function StudentSubjectsPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderRadius: '8px',
-                      background: 'var(--primary-color-light, #e0e7ff)',
+                      background: 'var(--ss-primary-light)',
                     }}>
                       {getSubjectIcon(s.name)}
                     </div>
@@ -191,7 +191,7 @@ export function StudentSubjectsPage() {
                   </div>
 
                   {s.description && (
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280', lineHeight: 1.5 }}>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-text-muted)', lineHeight: 1.5 }}>
                       {s.description}
                     </p>
                   )}
@@ -202,26 +202,26 @@ export function StudentSubjectsPage() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     paddingTop: '0.5rem',
-                    borderTop: '1px solid #eaeaea',
+                    borderTop: '1px solid var(--ss-border)',
                   }}>
                     <div>
                       {s.teacher_names && s.teacher_names.length > 0 ? (
-                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                          <span style={{ fontWeight: 600, color: '#374151' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--ss-text-muted)' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--ss-text-secondary)' }}>
                             {s.teacher_names.length === 1 ? 'Teacher:' : 'Teachers:'}
                           </span>{' '}
                           {s.teacher_names.join(', ')}
                         </div>
                       ) : (
-                        <div style={{ fontSize: '0.8rem', color: '#9ca3af' }}>No teacher assigned</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--ss-text-faint)' }}>No teacher assigned</div>
                       )}
                     </div>
 
                     {s.teachers_count != null && (
                       <span style={{
                         fontSize: '0.75rem',
-                        background: 'var(--primary-color-light, #e0e7ff)',
-                        color: 'var(--primary-color-dark, #4338ca)',
+                        background: 'var(--ss-primary-light)',
+                        color: 'var(--ss-primary-deep)',
                         padding: '0.25rem 0.75rem',
                         borderRadius: '999px',
                         fontWeight: 600,
@@ -236,16 +236,16 @@ export function StudentSubjectsPage() {
                     <div style={{
                       marginTop: '0.25rem',
                       paddingTop: '0.75rem',
-                      borderTop: '1px solid #eaeaea',
+                      borderTop: '1px solid var(--ss-border)',
                     }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ss-text-secondary)', marginBottom: '0.5rem' }}>
                         📝 Upcoming Exams ({subjectExams.length})
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {subjectExams.map((exam) => {
-                          const badge = EXAM_TYPE_BADGES[exam.exam_type] || { label: exam.exam_type_display || exam.exam_type, color: '#6b7280', bg: '#f3f4f6' }
+                          const badge = EXAM_TYPE_BADGES[exam.exam_type] || { label: exam.exam_type_display || exam.exam_type, color: 'var(--ss-text-muted)', bg: 'var(--ss-bg-hover)' }
                           const days = daysUntilExam(exam.exam_date)
-                          const urgency = days != null && days <= 3 ? '#ef4444' : days != null && days <= 7 ? '#f59e0b' : '#6b7280'
+                          const urgency = days != null && days <= 3 ? 'var(--ss-danger-bold)' : days != null && days <= 7 ? 'var(--ss-warning-bold)' : 'var(--ss-text-muted)'
                           return (
                             <div
                               key={exam.id}
@@ -255,8 +255,8 @@ export function StudentSubjectsPage() {
                                 gap: '0.75rem',
                                 padding: '0.5rem 0.75rem',
                                 borderRadius: '8px',
-                                background: '#fff',
-                                border: '1px solid #e5e7eb',
+                                background: 'var(--ss-bg-card)',
+                                border: '1px solid var(--ss-border-medium)',
                               }}
                             >
                               <span style={{
@@ -271,7 +271,7 @@ export function StudentSubjectsPage() {
                                 {badge.label}
                               </span>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#1f2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--ss-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {exam.name}
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: urgency, fontWeight: days != null && days <= 3 ? 600 : 400 }}>
@@ -280,7 +280,7 @@ export function StudentSubjectsPage() {
                                 </div>
                               </div>
                               {exam.teacher_name && (
-                                <span style={{ fontSize: '0.7rem', color: '#9ca3af', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--ss-text-faint)', whiteSpace: 'nowrap' }}>
                                   {exam.teacher_name}
                                 </span>
                               )}
@@ -295,9 +295,9 @@ export function StudentSubjectsPage() {
                     <div style={{
                       marginTop: '0.25rem',
                       paddingTop: '0.75rem',
-                      borderTop: '1px solid #eaeaea',
+                      borderTop: '1px solid var(--ss-border)',
                       fontSize: '0.8rem',
-                      color: '#9ca3af',
+                      color: 'var(--ss-text-faint)',
                       textAlign: 'center',
                     }}>
                       No upcoming exams
@@ -315,7 +315,7 @@ export function StudentSubjectsPage() {
         <Card title="📝 Other Upcoming Exams" style={{ marginTop: '1.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {unmatchedExams.map((exam) => {
-              const badge = EXAM_TYPE_BADGES[exam.exam_type] || { label: exam.exam_type_display || exam.exam_type, color: '#6b7280', bg: '#f3f4f6' }
+              const badge = EXAM_TYPE_BADGES[exam.exam_type] || { label: exam.exam_type_display || exam.exam_type, color: 'var(--ss-text-muted)', bg: 'var(--ss-bg-hover)' }
               return (
                 <div
                   key={exam.id}
@@ -325,8 +325,8 @@ export function StudentSubjectsPage() {
                     gap: '0.75rem',
                     padding: '0.75rem 1rem',
                     borderRadius: '8px',
-                    background: '#fafafa',
-                    border: '1px solid #e5e7eb',
+                    background: 'var(--ss-bg-main)',
+                    border: '1px solid var(--ss-border-medium)',
                   }}
                 >
                   <span style={{
@@ -341,16 +341,16 @@ export function StudentSubjectsPage() {
                     {badge.label}
                   </span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#1f2937' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--ss-text)' }}>
                       {exam.name}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--ss-text-muted)' }}>
                       {exam.subject_name || `Subject #${exam.subject}`} · {formatExamDate(exam.exam_date)}
                       {exam.duration ? ` · ${exam.duration} min` : ''}
                     </div>
                   </div>
                   {exam.teacher_name && (
-                    <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--ss-text-faint)' }}>
                       {exam.teacher_name}
                     </span>
                   )}

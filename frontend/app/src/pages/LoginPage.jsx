@@ -20,8 +20,8 @@ function LoginAsideIllustration() {
           <stop offset="100%" stopColor="#fafaf9" stopOpacity="0.1" />
         </linearGradient>
         <linearGradient id="login-ill-accent" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#a5b4fc" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.38" />
+          <stop offset="0%" stopColor="var(--ss-primary-end)" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="var(--ss-login-accent)" stopOpacity="0.38" />
         </linearGradient>
       </defs>
       {/* Dashboard card */}

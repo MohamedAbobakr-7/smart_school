@@ -12,10 +12,10 @@ function parseList(payload) {
 
 function getStatusColor(status) {
   switch (status?.toLowerCase()) {
-    case 'present': return '#10b981' // green
-    case 'absent': return '#ef4444' // red
-    case 'late': return '#f97316' // orange
-    default: return '#6b7280'
+    case 'present': return 'var(--ss-status-present)'
+    case 'absent': return 'var(--ss-status-absent)'
+    case 'late': return 'var(--ss-status-late)'
+    default: return 'var(--ss-text-muted)'
   }
 }
 
@@ -94,9 +94,9 @@ export function ParentAttendancePage() {
                 }}
               >
                 <span style={{ fontWeight: 500, color: 'var(--text-color)' }}>{studentName}</span>
-                <span style={{ color: '#9ca3af' }}>—</span>
-                <span style={{ color: 'var(--text-color)' }}>{r.date}</span>
-                <span style={{ color: '#9ca3af' }}>—</span>
+                <span style={{ color: 'var(--ss-text-faint)' }}>—</span>
+                <span style={{ color: 'var(--ss-text)' }}>{r.date}</span>
+                <span style={{ color: 'var(--ss-text-faint)' }}>—</span>
                 <span style={{ 
                   fontWeight: 600, 
                   color: getStatusColor(r.status),

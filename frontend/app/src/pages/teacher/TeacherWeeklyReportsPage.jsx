@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { apiFetch } from '../../lib/api'
 import { useTeacherProfile } from '../../hooks/useTeacherProfile'
+import { useChartColors } from '../../hooks/useChartColors'
 
 function formatPct(value) {
   if (value == null || isNaN(value)) return '0%'
@@ -11,6 +12,7 @@ function formatPct(value) {
 }
 
 export function TeacherWeeklyReportsPage() {
+  const colors = useChartColors()
   const {
     myClassIds,
     myClassObjects,
@@ -272,7 +274,7 @@ export function TeacherWeeklyReportsPage() {
       </div>
 
       {error && (
-        <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', color: '#991b1b', borderRadius: '8px' }}>
+        <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: 'var(--ss-error-banner-bg)', color: 'var(--ss-error-banner-text)', borderRadius: '8px' }}>
           {error}
         </div>
       )}
@@ -288,23 +290,23 @@ export function TeacherWeeklyReportsPage() {
           {/* Summary Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
             <Card style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#6b7280', fontWeight: 500 }}>My Classes Attendance</span>
-              <span style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: '#111827' }}>{formatPct(analytics.overallAtt)}</span>
+              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: 'var(--ss-text-muted)', fontWeight: 500 }}>My Classes Attendance</span>
+              <span style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: 'var(--ss-text)' }}>{formatPct(analytics.overallAtt)}</span>
             </Card>
 
             <Card style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#6b7280', fontWeight: 500 }}>My Subjects Avg Grade</span>
-              <span style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: '#111827' }}>{formatPct(analytics.overallGrd)}</span>
+              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: 'var(--ss-text-muted)', fontWeight: 500 }}>My Subjects Avg Grade</span>
+              <span style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: 'var(--ss-text)' }}>{formatPct(analytics.overallGrd)}</span>
             </Card>
 
             <Card style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#6b7280', fontWeight: 500 }}>Top Class</span>
-              <span style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.95rem)', fontWeight: 700, color: '#16a34a', overflow: 'hidden', textOverflow: 'ellipsis' }}>&nbsp;{analytics.bestClass}</span>
+              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: 'var(--ss-text-muted)', fontWeight: 500 }}>Top Class</span>
+              <span style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.95rem)', fontWeight: 700, color: 'var(--ss-success-bold)', overflow: 'hidden', textOverflow: 'ellipsis' }}>&nbsp;{analytics.bestClass}</span>
             </Card>
 
             <Card style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#6b7280', fontWeight: 500 }}>Needs Attention</span>
-              <span style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.95rem)', fontWeight: 700, color: '#d97706', overflow: 'hidden', textOverflow: 'ellipsis' }}>&nbsp;{analytics.worstClass}</span>
+              <span style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: 'var(--ss-text-muted)', fontWeight: 500 }}>Needs Attention</span>
+              <span style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.95rem)', fontWeight: 700, color: 'var(--ss-warning-bold)', overflow: 'hidden', textOverflow: 'ellipsis' }}>&nbsp;{analytics.worstClass}</span>
             </Card>
           </div>
 
@@ -313,8 +315,8 @@ export function TeacherWeeklyReportsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
               {classStatsFromDashboard.map((cls) => (
                 <Card key={cls.id} style={{ padding: '1rem 1.25rem' }}>
-                  <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#111827' }}>{cls.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#6b7280', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--ss-text)' }}>{cls.name}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--ss-text-muted)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     <span>{cls.student_count} students</span>
                     <span>Attendance: {cls.attendance_rate != null ? formatPct(cls.attendance_rate) : '—'}</span>
                     <span>Avg grade: {cls.avg_grade != null ? formatPct(cls.avg_grade) : '—'}</span>
@@ -330,11 +332,11 @@ export function TeacherWeeklyReportsPage() {
               <div style={{ height: '400px', width: '100%', marginTop: '1rem' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={analytics.attTrend} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eaeaea" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} angle={-35} textAnchor="end" height={60} tickMargin={15} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} domain={[0, 100]} width={40} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gridStroke} />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.tickFill }} angle={-35} textAnchor="end" height={60} tickMargin={15} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.tickFill }} domain={[0, 100]} width={40} />
                     <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                    <Line type="monotone" dataKey="rate" stroke="#000" strokeWidth={3} dot={{ r: 4, fill: '#000', strokeWidth: 0 }} activeDot={{ r: 6 }} name="Attendance %" />
+                    <Line type="monotone" dataKey="rate" stroke={colors.areaStroke} strokeWidth={3} dot={{ r: 4, fill: colors.areaStroke, strokeWidth: 0 }} activeDot={{ r: 6 }} name="Attendance %" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -345,11 +347,11 @@ export function TeacherWeeklyReportsPage() {
                 <div style={{ height: '400px', minWidth: analytics.gradeTrend.length > 8 ? analytics.gradeTrend.length * 70 : '100%', width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics.gradeTrend} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eaeaea" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} angle={-40} textAnchor="end" height={80} tickMargin={20} interval={0} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} domain={[0, 100]} width={40} />
-                      <Tooltip cursor={{ fill: '#f4f4f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                      <Bar dataKey="avg" fill="#111827" radius={[4, 4, 0, 0]} name="Avg Grade %" maxBarSize={48} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gridStroke} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.tickFill }} angle={-40} textAnchor="end" height={80} tickMargin={20} interval={0} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: colors.tickFill }} domain={[0, 100]} width={40} />
+                      <Tooltip cursor={{ fill: colors.cursorFill }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                      <Bar dataKey="avg" fill={colors.barFill} radius={[4, 4, 0, 0]} name="Avg Grade %" maxBarSize={48} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -363,8 +365,8 @@ export function TeacherWeeklyReportsPage() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                 {insights.map((ins, i) => (
                   <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: '#f3e8ff', color: '#9333ea', borderRadius: '50%', fontSize: '0.85rem', flexShrink: 0 }}>✦</span>
-                    <span style={{ fontSize: '0.95rem', color: '#374151', lineHeight: 1.5 }}>{ins}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'var(--ss-insight-purple-bg)', color: 'var(--ss-insight-purple-text)', borderRadius: '50%', fontSize: '0.85rem', flexShrink: 0 }}>✦</span>
+                    <span style={{ fontSize: '0.95rem', color: 'var(--ss-text-secondary)', lineHeight: 1.5 }}>{ins}</span>
                   </li>
                 ))}
               </ul>
@@ -374,8 +376,8 @@ export function TeacherWeeklyReportsPage() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                 {recommendations.map((rec, i) => (
                   <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: '#e0f2fe', color: '#0284c7', borderRadius: '50%', fontSize: '0.85rem', flexShrink: 0 }}>→</span>
-                    <span style={{ fontSize: '0.95rem', color: '#374151', lineHeight: 1.5 }}>{rec}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'var(--ss-insight-blue-bg)', color: 'var(--ss-insight-blue-text)', borderRadius: '50%', fontSize: '0.85rem', flexShrink: 0 }}>→</span>
+                    <span style={{ fontSize: '0.95rem', color: 'var(--ss-text-secondary)', lineHeight: 1.5 }}>{rec}</span>
                   </li>
                 ))}
               </ul>
@@ -385,44 +387,44 @@ export function TeacherWeeklyReportsPage() {
           {/* At Risk */}
           <Card title={`Students At Risk — My Classes (${analytics.atRiskStudents.length})`}>
             {analytics.atRiskStudents.length === 0 ? (
-              <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#6b7280' }}>
+              <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--ss-text-muted)' }}>
                 🎉 Great job! No students in your assigned classes are currently marked at risk.
               </div>
             ) : (
               <div style={{ overflowX: 'auto', marginTop: '1rem' }}>
                 <table className="feature-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #eaeaea' }}>
-                      <th style={{ padding: '1rem', textAlign: 'left', color: '#6b7280', fontWeight: 500, fontSize: '0.85rem' }}>Student</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', color: '#6b7280', fontWeight: 500, fontSize: '0.85rem' }}>Class</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', color: '#6b7280', fontWeight: 500, fontSize: '0.85rem' }}>Attendance</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', color: '#6b7280', fontWeight: 500, fontSize: '0.85rem' }}>Avg Grade</th>
-                      <th style={{ padding: '1rem', textAlign: 'left', color: '#6b7280', fontWeight: 500, fontSize: '0.85rem' }}>Alert</th>
+                    <tr style={{ borderBottom: '1px solid var(--ss-border)' }}>
+                      <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--ss-text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>Student</th>
+                      <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--ss-text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>Class</th>
+                      <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--ss-text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>Attendance</th>
+                      <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--ss-text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>Avg Grade</th>
+                      <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--ss-text-muted)', fontWeight: 500, fontSize: '0.85rem' }}>Alert</th>
                     </tr>
                   </thead>
                   <tbody>
                     {analytics.atRiskStudents.map((s) => (
-                      <tr key={s.id} style={{ borderBottom: '1px solid #f4f4f5' }}>
+                      <tr key={s.id} style={{ borderBottom: '1px solid var(--ss-border-light)' }}>
                         <td style={{ padding: '1rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             {s.photo_url ? (
                               <img src={s.photo_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
                             ) : (
-                              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#eaeaea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--ss-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
                             )}
                             <div>
-                              <div style={{ fontWeight: 600, color: '#111827', fontSize: '0.9rem' }}>{s.name}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{s.student_id}</div>
+                              <div style={{ fontWeight: 600, color: 'var(--ss-text)', fontSize: '0.9rem' }}>{s.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--ss-text-muted)' }}>{s.student_id}</div>
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.9rem', color: '#374151' }}>{s.school_class_display || '—'}</td>
-                        <td style={{ padding: '1rem', fontSize: '0.9rem', fontWeight: 600, color: s.isRiskAtt ? '#dc2626' : '#111827' }}>{formatPct(s.attendancePct)}</td>
-                        <td style={{ padding: '1rem', fontSize: '0.9rem', fontWeight: 600, color: s.isRiskGrd ? '#d97706' : '#111827' }}>{formatPct(s.avgGrade)}</td>
+                        <td style={{ padding: '1rem', fontSize: '0.9rem', color: 'var(--ss-text-secondary)' }}>{s.school_class_display || '—'}</td>
+                        <td style={{ padding: '1rem', fontSize: '0.9rem', fontWeight: 600, color: s.isRiskAtt ? 'var(--ss-danger-bold)' : 'var(--ss-text)' }}>{formatPct(s.attendancePct)}</td>
+                        <td style={{ padding: '1rem', fontSize: '0.9rem', fontWeight: 600, color: s.isRiskGrd ? 'var(--ss-warning-bold)' : 'var(--ss-text)' }}>{formatPct(s.avgGrade)}</td>
                         <td style={{ padding: '1rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-start' }}>
-                            {s.isRiskAtt && <span style={{ background: '#fee2e2', color: '#991b1b', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid #fecaca' }}>At Risk: Attendance</span>}
-                            {s.isRiskGrd && <span style={{ background: '#fef3c7', color: '#b45309', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid #fde68a' }}>Warning: Grades</span>}
+                            {s.isRiskAtt && <span style={{ background: 'var(--ss-danger-bg)', color: 'var(--ss-danger-text)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid var(--ss-danger-border)' }}>At Risk: Attendance</span>}
+                            {s.isRiskGrd && <span style={{ background: 'var(--ss-warning-bg)', color: 'var(--ss-warning-text)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid var(--ss-warning-border)' }}>Warning: Grades</span>}
                           </div>
                         </td>
                       </tr>
@@ -436,12 +438,12 @@ export function TeacherWeeklyReportsPage() {
       )}
 
       {showReportModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', width: 'min(700px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #eaeaea', paddingBottom: '1rem' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--ss-modal-overlay)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--ss-bg-card)', borderRadius: '16px', width: 'min(700px, 100%)', maxHeight: '90vh', overflowY: 'auto', padding: '2.5rem', boxShadow: 'var(--ss-modal-shadow)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid var(--ss-border)', paddingBottom: '1rem' }}>
               <div>
-                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.5rem', color: '#111827' }}>My Classes — Weekly Report</h2>
-                <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem' }}>
+                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.5rem', color: 'var(--ss-text)' }}>My Classes — Weekly Report</h2>
+                <p style={{ margin: 0, color: 'var(--ss-text-muted)', fontSize: '0.9rem' }}>
                   {generatedReport?.week_start ? `${generatedReport.week_start} → ${generatedReport.week_end}` : `Generated on ${new Date().toLocaleDateString()}`}
                 </p>
               </div>
@@ -449,21 +451,21 @@ export function TeacherWeeklyReportsPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <p style={{ fontSize: '1rem', color: '#374151', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '1rem', color: 'var(--ss-text-secondary)', lineHeight: 1.6, margin: 0 }}>
                 This report covers <strong>your assigned classes only</strong>. Overall attendance was <strong>{formatPct(analytics.overallAtt)}</strong> and average grade in your subjects was <strong>{formatPct(analytics.overallGrd)}</strong>.
               </p>
 
               <div>
-                <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.75rem 0', color: '#111827' }}>Class Highlights</h3>
-                <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#374151', lineHeight: 1.6 }}>
+                <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.75rem 0', color: 'var(--ss-text)' }}>Class Highlights</h3>
+                <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--ss-text-secondary)', lineHeight: 1.6 }}>
                   <li><strong>Highest Performance:</strong> {analytics.bestClass}</li>
                   <li><strong>Requires Attention:</strong> {analytics.worstClass}</li>
                 </ul>
               </div>
 
               <div>
-                <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.75rem 0', color: '#111827' }}>Action Required</h3>
-                <p style={{ margin: '0 0 0.5rem 0', color: '#374151', lineHeight: 1.6 }}>
+                <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.75rem 0', color: 'var(--ss-text)' }}>Action Required</h3>
+                <p style={{ margin: '0 0 0.5rem 0', color: 'var(--ss-text-secondary)', lineHeight: 1.6 }}>
                   There are <strong>{analytics.atRiskStudents.length}</strong> students in your classes marked as "At Risk".
                 </p>
               </div>

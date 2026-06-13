@@ -151,7 +151,7 @@ export function ParentGradesPage() {
             <p className="muted">Calculating average...</p>
           ) : selectedChildId ? (
             <p className="student-grade-average" style={{ 
-              color: averagePct != null && averagePct < 50 ? '#ef4444' : 'inherit' 
+              color: averagePct != null && averagePct < 50 ? 'var(--ss-danger-bold)' : 'inherit'
             }}>
               {formatPct(averagePct)}
             </p>
@@ -188,15 +188,15 @@ export function ParentGradesPage() {
                     const isLow = g.percentage != null ? g.percentage < 50 : ((g.total_grade || g.total_questions) > 0 && g.score / (g.total_grade || g.total_questions) < 0.5)
                     return (
                       <tr key={g.id} style={{ 
-                        background: isLow ? 'rgba(239, 68, 68, 0.05)' : 'transparent' 
+                        background: isLow ? 'var(--ss-danger-bg)' : 'transparent'
                       }}>
                         <td>{g.subject_name || '—'}</td>
                         <td>{g.exam_name || '—'}</td>
-                        <td style={{ color: isLow ? '#ef4444' : 'inherit', fontWeight: isLow ? 600 : 'normal' }}>
+                        <td style={{ color: isLow ? 'var(--ss-danger-bold)' : 'inherit', fontWeight: isLow ? 600 : 'normal' }}>
                           {g.score ?? '—'}
                         </td>
                         <td>{g.total_grade ?? g.total_questions ?? '—'}</td>
-                        <td style={{ color: isLow ? '#ef4444' : 'inherit', fontWeight: isLow ? 600 : 'normal' }}>
+                        <td style={{ color: isLow ? 'var(--ss-danger-bold)' : 'inherit', fontWeight: isLow ? 600 : 'normal' }}>
                           {formatPct(g.percentage)}
                         </td>
                         <td>{formatDate(g.created_at)}</td>

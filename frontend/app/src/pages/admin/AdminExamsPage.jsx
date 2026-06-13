@@ -76,6 +76,7 @@ export function AdminExamsPage() {
   const [editing, setEditing] = useState(null)
 
   const [gradeSearch, setGradeSearch] = useState('')
+  const [gradeClassFilter, setGradeClassFilter] = useState('all')
 
   /* ── load ────────────────────────────────────────────────────── */
   async function loadData() {
@@ -149,16 +150,25 @@ export function AdminExamsPage() {
 
   const filteredGrades = useMemo(() => {
     const q = gradeSearch.trim().toLowerCase()
-    const list = grades
+    let list = grades
+
+    if (gradeClassFilter !== 'all') {
+      list = list.filter((g) => {
+        const st = studentById.get(g.student)
+        return st && String(st.school_class) === String(gradeClassFilter)
+      })
+    }
+
     if (!q) return list
     return list.filter((g) => {
       const st = studentById.get(g.student)
       const stUser = st ? userById.get(st.user) : null
       const ex = examById.get(g.exam)
-      const hay = `${st?.student_id || ''} ${fullName(stUser)} ${ex?.name || ''} ${g.score}`.toLowerCase()
+      const cls = st?.school_class ? classById.get(st.school_class) : null
+      const hay = `${st?.student_id || ''} ${fullName(stUser)} ${ex?.name || ''} ${cls?.display_name || ''} ${g.score}`.toLowerCase()
       return hay.includes(q)
     })
-  }, [grades, gradeSearch, studentById, userById, examById])
+  }, [grades, gradeSearch, gradeClassFilter, studentById, userById, examById, classById])
 
   /* ── exam CRUD ───────────────────────────────────────────────── */
   function startCreate() {
@@ -563,12 +573,24 @@ export function AdminExamsPage() {
           {!loading && !error && (
             <Card title={`Grades Directory (${filteredGrades.length})`}>
               <div className="students-toolbar" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <select
+                  className="login-input login-input--plain"
+                  value={gradeClassFilter}
+                  onChange={(e) => setGradeClassFilter(e.target.value)}
+                  style={{ minWidth: '200px' }}
+                  aria-label="Filter grades by class"
+                >
+                  <option value="all">All classes</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.display_name || c.name}</option>
+                  ))}
+                </select>
                 <div className="topbar-search-label" style={{ flex: '1', minWidth: '240px', maxWidth: '400px', margin: 0 }}>
                   <span className="topbar-search-icon" style={{ pointerEvents: 'none' }}>🔍</span>
                   <input
                     type="search"
                     className="topbar-search"
-                    placeholder="Search by student, exam, score…"
+                    placeholder="Search by student, exam, class, score…"
                     value={gradeSearch}
                     onChange={(e) => setGradeSearch(e.target.value)}
                   />
@@ -585,12 +607,13 @@ export function AdminExamsPage() {
                     <tr>
                       <th>Student</th>
                       <th>Student ID</th>
+                      <th>Class</th>
                       <th>Exam</th>
                       <th>Subject</th>
-                      <th>Grade</th>
+                      <th>Grade Level</th>
                       <th>Score</th>
                       <th>%</th>
-                      <th>Grade</th>
+                      <th>Letter</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -600,11 +623,19 @@ export function AdminExamsPage() {
                       const stUser = st ? userById.get(st.user) : null
                       const ex = examById.get(g.exam)
                       const sub = ex ? subjectById.get(ex.subject) : null
+                      const cls = st?.school_class ? classById.get(st.school_class) : null
                       return (
                         <tr key={g.id}>
                           <td>{fullName(stUser)}</td>
                           <td>
                             <span className="username-chip">{st?.student_id || `#${g.student}`}</span>
+                          </td>
+                          <td>
+                            {cls ? (
+                              <span className="badge badge-class">{cls.display_name || cls.name}</span>
+                            ) : (
+                              <span className="muted">{st?.school_class_display || '—'}</span>
+                            )}
                           </td>
                           <td>{ex?.name || `#${g.exam}`}</td>
                           <td>
@@ -645,7 +676,11 @@ export function AdminExamsPage() {
               </div>
             ) : (
               <div className="students-empty" style={{ padding: '2rem 0', textAlign: 'center' }}>
-                <p className="muted">No grades match your search.</p>
+                <p className="muted">
+                  {gradeClassFilter !== 'all'
+                    ? 'No grades found for the selected class.'
+                    : 'No grades match your search.'}
+                </p>
               </div>
             )}
           </Card>

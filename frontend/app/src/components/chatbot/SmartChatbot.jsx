@@ -22,7 +22,7 @@ function TypingDots() {
       {[0, 1, 2].map(i => (
         <span key={i} style={{
           width: '8px', height: '8px', borderRadius: '50%',
-          background: '#6366f1',
+          background: 'var(--ss-primary)',
           animation: 'chatbotPulse 1.2s ease-in-out infinite',
           animationDelay: `${i * 0.2}s`,
           display: 'inline-block',
@@ -45,7 +45,7 @@ function ChatBubble({ msg }) {
       {isBot && (
         <div style={{
           width: '28px', height: '28px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          background: 'var(--ss-auth-brand-gradient)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '14px', flexShrink: 0,
         }}>🤖</div>
@@ -55,9 +55,9 @@ function ChatBubble({ msg }) {
         padding: '0.6rem 0.9rem',
         borderRadius: isBot ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
         background: isBot
-          ? 'var(--bg-hover, #f1f5f9)'
-          : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-        color: isBot ? 'var(--text-main, #111827)' : '#fff',
+          ? 'var(--ss-bg-hover)'
+          : 'var(--ss-auth-brand-gradient)',
+        color: isBot ? 'var(--ss-text)' : 'var(--ss-text-on-primary)',
         fontSize: '0.875rem',
         lineHeight: 1.55,
         boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
@@ -195,16 +195,16 @@ export function SmartChatbot() {
           style={{
             position: 'fixed', bottom: '1.75rem', right: '1.75rem',
             width: '56px', height: '56px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            color: '#fff', border: 'none',
-            boxShadow: '0 4px 20px rgba(99,102,241,0.45)',
+            background: 'var(--ss-auth-brand-gradient)',
+            color: 'var(--ss-text-on-primary)', border: 'none',
+            boxShadow: 'var(--ss-primary-shadow)',
             cursor: 'pointer', zIndex: 9999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '1.4rem',
             transition: 'transform 0.2s, box-shadow 0.2s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(99,102,241,0.55)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(99,102,241,0.45)' }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
         >
           {icon}
         </button>
@@ -216,10 +216,10 @@ export function SmartChatbot() {
           style={{
             position: 'fixed', bottom: '1.75rem', right: '1.75rem',
             width: '370px', height: '560px',
-            background: 'var(--bg-card, #fff)',
+            background: 'var(--ss-bg-card)',
             borderRadius: '20px',
             boxShadow: '0 12px 48px rgba(0,0,0,0.18)',
-            border: '1px solid var(--border-color, #eaeaea)',
+            border: '1px solid var(--ss-border)',
             display: 'flex', flexDirection: 'column',
             zIndex: 9999, overflow: 'hidden',
             animation: 'chatbotSlideUp 0.25s ease',
@@ -227,7 +227,7 @@ export function SmartChatbot() {
         >
           {/* Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            background: 'var(--ss-auth-brand-gradient)',
             padding: '0.9rem 1rem',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexShrink: 0,
@@ -265,13 +265,13 @@ export function SmartChatbot() {
             flex: 1, overflowY: 'auto',
             padding: '1rem',
             display: 'flex', flexDirection: 'column',
-            background: 'var(--bg-main, #f8fafc)',
+            background: 'var(--ss-bg-main)',
           }}>
             {messages.map((m, i) => <ChatBubble key={i} msg={m} />)}
             {loading && (
               <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                 <div style={{
-                  background: 'var(--bg-hover, #f1f5f9)',
+                  background: 'var(--ss-bg-hover)',
                   borderRadius: '4px 16px 16px 16px',
                   boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
                 }}>
@@ -287,7 +287,7 @@ export function SmartChatbot() {
             <div style={{
               padding: '0.5rem 0.85rem 0',
               display: 'flex', gap: '0.4rem', flexWrap: 'wrap',
-              background: 'var(--bg-card, #fff)',
+              background: 'var(--ss-bg-card)',
             }}>
               {suggestions.map((s, i) => (
                 <button
@@ -296,17 +296,17 @@ export function SmartChatbot() {
                   style={{
                     padding: '0.3rem 0.7rem',
                     borderRadius: '999px',
-                    border: '1px solid #6366f1',
+                    border: '1px solid var(--ss-primary)',
                     background: 'transparent',
-                    color: '#6366f1',
+                    color: 'var(--ss-primary)',
                     fontSize: '0.78rem',
                     cursor: 'pointer',
                     fontWeight: 600,
                     transition: 'all 0.15s',
                     marginBottom: '0.35rem',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#6366f1'; e.currentTarget.style.color = '#fff' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6366f1' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--ss-primary)'; e.currentTarget.style.color = 'var(--ss-text-on-primary)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ss-primary)' }}
                 >
                   {s}
                 </button>
@@ -317,9 +317,9 @@ export function SmartChatbot() {
           {/* Input */}
           <div style={{
             padding: '0.65rem 0.85rem',
-            borderTop: '1px solid var(--border-color, #eaeaea)',
+            borderTop: '1px solid var(--ss-border)',
             display: 'flex', gap: '0.5rem', alignItems: 'flex-end',
-            background: 'var(--bg-card, #fff)',
+            background: 'var(--ss-bg-card)',
           }}>
             <textarea
               ref={inputRef}
@@ -331,12 +331,12 @@ export function SmartChatbot() {
               rows={1}
               style={{
                 flex: 1,
-                border: '1.5px solid var(--border-color, #eaeaea)',
+                border: '1.5px solid var(--ss-border)',
                 borderRadius: '12px',
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.875rem',
-                background: 'var(--bg-main, #f8fafc)',
-                color: 'var(--text-main, #111827)',
+                background: 'var(--ss-bg-main)',
+                color: 'var(--ss-text)',
                 resize: 'none',
                 outline: 'none',
                 lineHeight: 1.5,
@@ -345,8 +345,8 @@ export function SmartChatbot() {
                 transition: 'border-color 0.2s',
                 fontFamily: 'inherit',
               }}
-              onFocus={e => { e.target.style.borderColor = '#6366f1' }}
-              onBlur={e => { e.target.style.borderColor = 'var(--border-color, #eaeaea)' }}
+              onFocus={e => { e.target.style.borderColor = 'var(--ss-primary)' }}
+              onBlur={e => { e.target.style.borderColor = 'var(--ss-border)' }}
             />
             <button
               onClick={() => sendMessage(input)}
@@ -355,10 +355,10 @@ export function SmartChatbot() {
               style={{
                 width: '38px', height: '38px', borderRadius: '50%',
                 background: input.trim() && !loading
-                  ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
-                  : 'var(--border-color, #eaeaea)',
+                  ? 'var(--ss-auth-brand-gradient)'
+                  : 'var(--ss-border)',
                 border: 'none',
-                color: input.trim() && !loading ? '#fff' : 'var(--text-muted, #9ca3af)',
+                color: input.trim() && !loading ? 'var(--ss-text-on-primary)' : 'var(--ss-text-muted)',
                 cursor: input.trim() && !loading ? 'pointer' : 'default',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.2s',

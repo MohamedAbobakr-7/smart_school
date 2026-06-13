@@ -285,10 +285,22 @@ def sync_m2m_from_enrollment(sender, instance, **kwargs):
     - ACTIVE enrollment → add subject to M2M
     - WITHDRAWN/COMPLETED/SUSPENDED → remove subject from M2M
     - Deleted enrollment → remove subject from M2M
+    
+    Skips modification if the student no longer exists in the database
+    (e.g. during CASCADE deletion of a Student).
     """
     global _syncing_enrollment
     if _syncing_enrollment:
         return  # avoid infinite loop
+
+    # Skip if the student has been deleted from the database (CASCADE delete scenario)
+    # When a Student is deleted, SubjectEnrollment records are CASCADE-deleted too,
+    # which triggers this post_delete signal. Trying to modify M2M on a
+    # deleted student raises ValueError.
+    # Lazy import to avoid circular dependency between subjects and students apps.
+    from students.models import Student
+    if not Student.objects.filter(pk=instance.student_id).exists():
+        return
 
     _syncing_enrollment = True
     try:

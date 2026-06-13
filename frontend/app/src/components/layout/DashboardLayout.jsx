@@ -6,6 +6,7 @@ import { navItemsForRole } from '../../config/navigation'
 import { Sidebar } from './Sidebar'
 import { apiFetch } from '../../lib/api'
 import { SmartChatbot } from '../chatbot/SmartChatbot'
+import { ThemeSelector } from '../ui/ThemeSelector'
 
 function greetingForHour() {
   const h = new Date().getHours()
@@ -141,8 +142,8 @@ export function DashboardLayout() {
                   position: 'absolute',
                   top: '-2px',
                   right: '-2px',
-                  background: '#ef4444',
-                  color: 'white',
+                  background: 'var(--ss-danger-bold)',
+                  color: 'var(--ss-text-on-primary)',
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
                   borderRadius: '10px',
@@ -154,6 +155,7 @@ export function DashboardLayout() {
                 </span>
               )}
             </button>
+            <ThemeSelector />
             <span className="topbar-role-pill">{user?.role_display || user?.role}</span>
             <button type="button" className="btn btn-ghost topbar-logout" onClick={handleLogout}>
               Log out

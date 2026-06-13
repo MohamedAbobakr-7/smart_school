@@ -66,14 +66,14 @@ export function NotificationsPage() {
             const displayTitle = localizedField(n, 'title', lang)
             const displayBody = localizedField(n, 'body', lang)
             return (
-              <Card key={n.id} style={{ borderLeft: isUnread ? '4px solid #6366f1' : '1px solid var(--border-color)' }}>
+              <Card key={n.id} style={{ borderLeft: isUnread ? '4px solid var(--ss-primary)' : '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
                   <div>
                     <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.05rem', fontWeight: isUnread ? 600 : 500, color: 'var(--text-color)' }}>
                       {displayTitle}
                     </h3>
                     <p style={{ margin: 0, color: 'var(--text-color)', lineHeight: 1.5 }}>{displayBody}</p>
-                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: '#9ca3af' }}>{formatDate(n.created_at)}</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--ss-text-faint)' }}>{formatDate(n.created_at)}</p>
                   </div>
                   {isUnread && (
                     <button className="btn btn-ghost" onClick={() => markRead(n.id)} style={{ fontSize: '0.85rem' }}>

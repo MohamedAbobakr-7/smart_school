@@ -8,11 +8,11 @@ import { apiFetch, apiFetchAll } from '../../lib/api'
 
 function statusChip(status) {
   const map = {
-    active: { label: 'Active', bg: '#dcfce7', color: '#166534' },
-    completed: { label: 'Finished', bg: '#dbeafe', color: '#1e40af' },
-    cancelled: { label: 'Cancelled', bg: '#fee2e2', color: '#991b1b' },
+    active: { label: 'Active', bg: 'var(--ss-success-bg)', color: 'var(--ss-success-text)' },
+    completed: { label: 'Finished', bg: 'var(--ss-info-bg)', color: 'var(--ss-info-text)' },
+    cancelled: { label: 'Cancelled', bg: 'var(--ss-danger-bg)', color: 'var(--ss-danger-text)' },
   }
-  const s = map[status] || { label: status || '—', bg: '#f3f4f6', color: '#374151' }
+  const s = map[status] || { label: status || '—', bg: 'var(--ss-bg-hover)', color: 'var(--ss-text-secondary)' }
   return (
     <span
       style={{
@@ -32,10 +32,10 @@ function statusChip(status) {
 
 function studentStatusBadge(status) {
   const map = {
-    present: { label: 'Present', bg: '#dcfce7', color: '#166534', icon: '✓' },
-    absent: { label: 'Absent', bg: '#fee2e2', color: '#991b1b', icon: '✗' },
+    present: { label: 'Present', bg: 'var(--ss-success-bg)', color: 'var(--ss-success-text)', icon: '✓' },
+    absent: { label: 'Absent', bg: 'var(--ss-danger-bg)', color: 'var(--ss-danger-text)', icon: '✗' },
   }
-  const s = map[status] || { label: status, bg: '#f3f4f6', color: '#374151', icon: '' }
+  const s = map[status] || { label: status, bg: 'var(--ss-bg-hover)', color: 'var(--ss-text-secondary)', icon: '' }
   return (
     <span
       style={{
@@ -78,19 +78,19 @@ function SessionDetail({ sessionData, onBack }) {
       <Card title={`Session #${session.id} — ${session.school_class_name || session.class_name || '—'}`}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Date</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>Date</p>
             <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{session.date || '—'}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Status</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>Status</p>
             <p style={{ margin: 0 }}>{statusChip(session.status)}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Instructor</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>Instructor</p>
             <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{session.instructor_name || '—'}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Total Students</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-text-muted)' }}>Total Students</p>
             <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{sessionData.total_class_students}</p>
           </div>
         </div>
@@ -99,29 +99,29 @@ function SessionDetail({ sessionData, onBack }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
           <div
             style={{
-              background: '#dcfce7',
+              background: 'var(--ss-success-bg)',
               borderRadius: '0.5rem',
               padding: '0.75rem 1rem',
               textAlign: 'center',
             }}
           >
-            <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#166534' }}>
+            <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--ss-success-text)' }}>
               {sessionData.present_count}
             </p>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#166534' }}>Present</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-success-text)' }}>Present</p>
           </div>
           <div
             style={{
-              background: '#fee2e2',
+              background: 'var(--ss-danger-bg)',
               borderRadius: '0.5rem',
               padding: '0.75rem 1rem',
               textAlign: 'center',
             }}
           >
-            <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#991b1b' }}>
+            <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--ss-danger-text)' }}>
               {sessionData.absent_count}
             </p>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#991b1b' }}>Absent</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ss-danger-text)' }}>Absent</p>
           </div>
         </div>
       </Card>
@@ -397,8 +397,8 @@ export function SessionHistoryPage({ title = 'Session History' }) {
                         <td>{s.school_class_name || s.class_name || '—'}</td>
                         <td>{s.date || '—'}</td>
                         <td>{statusChip(s.status)}</td>
-                        <td style={{ fontWeight: 600, color: '#166534' }}>{entry.present_count}</td>
-                        <td style={{ fontWeight: 600, color: '#991b1b' }}>{entry.absent_count}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--ss-success-bold)' }}>{entry.present_count}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--ss-danger-bold)' }}>{entry.absent_count}</td>
                         <td>
                           <button
                             className="btn btn-primary btn-xs"                            onClick={() => navigate(String(s.id))}
